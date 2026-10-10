@@ -12,8 +12,12 @@ module Ixport
       @fields ||= []
     end
 
-    def new_row?(_row)
-      true
+    def new_row?(row)
+      find_existing(row).nil?
+    end
+
+    def find_existing(_row)
+      nil
     end
   end
 end
