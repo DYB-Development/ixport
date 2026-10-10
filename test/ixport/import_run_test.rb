@@ -72,6 +72,12 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ "failed", "Disk full", 1, [ "B2" ] ], [ import.reload.status, import.error_message, import.added_count, @account.products.pluck(:sku) ]
   end
 
+  test "the error a run stopped on is reported to the host's error reporting" do
+    import = import_of("SKU,Price\nRAISE,300\n")
+
+    assert_error_reported(RuntimeError) { import.run! }
+  end
+
   private
 
   def import_of(csv)
