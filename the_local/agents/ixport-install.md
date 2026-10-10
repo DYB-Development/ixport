@@ -57,7 +57,7 @@ ixport is a Rails engine with two pages of work for a signed-in person. On the i
    ```ruby
    mount Ixport::Engine => "/data_imports"
    ```
-   If the app's routes put signed-in pages inside a block such as `authenticate :user do`, ask the developer whether the mount goes inside it.
+   If the app's routes put signed-in pages inside a block such as `authenticate :user do`, ask the developer whether the mount goes inside it. Do not give the mount a name with `as:`. A wallflower task links to the import's result page through the route name `ixport`, so the mount keeps that name. `bin/rails routes` lists the mount with `ixport` in its name column.
 8. Read the app's `ApplicationController` and the controller methods it gets from its sign-in setup. ixport's controllers inherit from the app's `ApplicationController`, so every method named in the next step must be callable from it.
 9. Compare the app's method and layout names with the defaults in the Interface section. Every default matches a Jumpstart app, so an app that uses all of the defaults needs no configuration. Where any name differs, or a method does not exist, ask the developer which method or layout to use rather than picking one:
    - The sign-in check: the method that sends a person who is not signed in to sign in, such as `:authenticate_user!` or `:require_login`.
@@ -96,7 +96,7 @@ ixport is a Rails engine with two pages of work for a signed-in person. On the i
 
 ## Conventions
 
-- After installing or updating, check that `bin/rails db:migrate:status` lists the create-ixport-imports, create-ixport-import-refusals, create-ixport-export-templates and add-wallflower-task-to-ixport-imports migrations as up, that `bin/rails routes` lists the mount path, and that both pages load as described in step 12. With `config.background_runner = :wallflower`, also check that `bin/rails routes` lists wallflower's mount under the name `wallflower`.
+- After installing or updating, check that `bin/rails db:migrate:status` lists the create-ixport-imports, create-ixport-import-refusals, create-ixport-export-templates and add-wallflower-task-to-ixport-imports migrations as up, that `bin/rails routes` lists the mount path, and that both pages load as described in step 12. With `config.background_runner = :wallflower`, also check that `bin/rails routes` lists ixport's mount under the name `ixport` and wallflower's mount under the name `wallflower`.
 - Run the install generator once, and the update generator only on an app installed with an earlier ixport. A second run of either against unchanged copies reports each migration as identical and adds nothing. If a copied migration differs from the one the generator would write, the run stops with an error naming that migration, and copies nothing after it. Do not delete or edit a copied migration once it has been run.
 - When the app renames its sign-in method, its current person or account method, the layout ixport uses, or its own runner class, update the matching line in `config/initializers/ixport.rb` in the same change.
 - A setting given the same value as its default is left out of the initializer. Remove a line when its value goes back to the default.
