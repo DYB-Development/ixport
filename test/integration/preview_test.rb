@@ -41,4 +41,10 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "2" ], css_select("[data-update-row] [data-row-number]").map { |number| number.text.strip }
   end
+
+  test "lists each refused row with its row number in the file and the reason the record gives" do
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_equal [ [ "4", "Price cents is not a number" ] ], css_select("[data-refused-row]").map { |row| [ row.at_css("[data-row-number]").text.strip, row.at_css("[data-reason]").text.strip ] }
+  end
 end

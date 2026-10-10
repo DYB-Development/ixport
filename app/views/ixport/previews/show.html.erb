@@ -17,4 +17,16 @@
       </ul>
     <% end %>
   <% end %>
+  <% if @refused_rows.any? %>
+    <%= ui_section(title: "Will be refused") do %>
+      <ul>
+        <% @refused_rows.each do |row| %>
+          <%= tag.li(data: { refused_row: true }) do %>
+            Row <%= tag.span(row.number, data: { row_number: true }) %>
+            <%= tag.span(row.reason, data: { reason: true }) %>
+          <% end %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
 <% end %>
