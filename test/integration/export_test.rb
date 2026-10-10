@@ -77,4 +77,12 @@ class ExportTest < ActionDispatch::IntegrationTest
 
     assert_equal "SKU,Price\nA1,100\n", response.body
   end
+
+  test "each registered export on the exports page links to its download" do
+    Ixport.register_export(:products, title: "Products", exporter: "ExportTest::ProductExporter")
+
+    get "/data_imports/exports"
+
+    assert_select "[data-export] a[href='/data_imports/exports/products']", text: "Products"
+  end
 end
