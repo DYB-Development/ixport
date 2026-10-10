@@ -19,6 +19,10 @@ develop:
   - new_row?
   - Ixport::MissingImporter
   - GET /
+  - GET /imports/new
+  - POST /imports
+  - GET /imports/:import_id/mapping
+  - PATCH /imports/:import_id/mapping
 
 sources:
   - lib/ixport.rb
@@ -32,3 +36,8 @@ sources:
   - app/controllers/ixport/application_controller.rb
   - app/controllers/ixport/imports_controller.rb
   - app/views/ixport/imports/index.html.erb
+  - app/models/ixport/application_record.rb
+  - app/models/ixport/import.rb
+  - app/controllers/ixport/mappings_controller.rb
+  - app/views/ixport/imports/new.html.erb
+  - app/views/ixport/mappings/show.html.erb
