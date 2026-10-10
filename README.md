@@ -150,6 +150,17 @@ Ixport.register_export :products, title: "Products", exporter: "ProductExporter"
 
 On the exports page, a chosen export lists its saved templates and offers New template. A template has a name and the exporter's columns picked in order, and downloading it gives a CSV of only those columns. Every member of an account sees, downloads, edits and deletes the account's templates, and another account's templates answer not found. A template whose column the exporter no longer lists still downloads, without that column.
 
+## Who may import or export
+
+Any import or export registration can take an `allow:` rule. It receives the signed-in person and the current account, and returns true to allow them. A rule can call the app's own Pundit policy:
+
+```ruby
+Ixport.register_import :products, title: "Products", importer: "ProductImporter",
+  allow: ->(person, account) { ProductImportPolicy.new(person, account).create? }
+```
+
+A person the rule refuses does not see that import or export listed, nor their past imports of it, and every one of its pages and downloads answers not found. A registration with no rule is open to every signed-in person.
+
 ## Claude Code agents
 
 ixport ships its own Claude Code agents through [the_local](https://github.com/DYB-Development/the_local). An app that lists ixport in its Gemfile and runs `bundle exec the_local install` gets them in `.claude/agents/`.

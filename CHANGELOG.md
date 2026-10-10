@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - `config.background_runner` runs every import through wallflower or the app's own runner, with no inline row limit. A wallflower task shows the import's progress, changes and refusals and links to its result page. An app's own runner is handed each import with `enqueue` and runs it with `Ixport.run_import`. `ixport:update` copies the migration linking an import to its wallflower task.
 - An upload is refused with a message when the file is not UTF-8 or its quoting is broken, naming the line where reading stopped, and a byte order mark is ignored.
 - An import whose run raises is marked failed, keeps the rows saved before the error, shows the error and how far it got, and reports it through `Rails.error`. `ixport:update` copies the migration that stores the error.
+- `allow:` on `Ixport.register_import` and `Ixport.register_export` takes a rule receiving the person and account, which can call the app's own Pundit policy. A person it refuses does not see that kind, and its pages and downloads answer not found.
 
 ## [0.1.0] - 2026-10-10
 
