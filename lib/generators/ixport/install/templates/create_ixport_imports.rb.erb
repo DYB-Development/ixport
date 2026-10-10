@@ -1,6 +1,7 @@
 class CreateIxportImports < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
     create_table :ixport_imports do |t|
+      t.references :person, polymorphic: true, null: false
       t.timestamps
     end
   end

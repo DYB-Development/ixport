@@ -22,6 +22,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "create_table :ixport_imports"
   end
 
+  test "the migration gives each import the person who started it" do
+    assert_includes migration, "t.references :person, polymorphic: true, null: false"
+  end
+
   private
 
   def migration
