@@ -3,7 +3,7 @@
 module Ixport
   class ExportTemplatesController < ApplicationController
     before_action :find_chosen_export, only: %i[new create]
-    before_action :find_template, only: %i[show update destroy]
+    before_action :find_template, only: %i[show edit update destroy]
 
     def new
       @columns = @registration.exporter.constantize.columns
@@ -17,6 +17,10 @@ module Ixport
     def show
       exporter = @template.registration.exporter.constantize.new(person: ixport_person, account: ixport_account)
       send_data CsvWriter.new(exporter, @template.picked_columns).to_csv, filename: "#{@template.name.parameterize}.csv", type: "text/csv"
+    end
+
+    def edit
+      @columns = @template.registration.exporter.constantize.columns
     end
 
     def update

@@ -104,4 +104,12 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_not Ixport::ExportTemplate.exists?(template.id)
   end
+
+  test "the edit page shows the template's name and its columns picked in order" do
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "price_cents", "sku" ], person: @person, account: @account)
+
+    get "/data_imports/export_templates/#{template.id}/edit"
+
+    assert_equal [ "Prices", [ "price_cents", "sku", nil ] ], [ css_select("form input[name=name]").first["value"], css_select("form select[name='columns[]']").map { |select| select.at_css("option[selected]")&.[]("value") } ]
+  end
 end
