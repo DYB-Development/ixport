@@ -2,7 +2,7 @@
 
 module Ixport
   Registration = Struct.new(:key, :title, :importer, keyword_init: true)
-  ExportRegistration = Struct.new(:key, :title, :exporter, keyword_init: true)
+  ExportRegistration = Struct.new(:key, :title, :exporter, :chosen, keyword_init: true)
 
   class MissingImporter < StandardError; end
   class MissingExporter < StandardError; end
@@ -32,8 +32,8 @@ module Ixport
     end
   end
 
-  def self.register_export(key, title:, exporter:)
-    export_registrations[key.to_sym] = ExportRegistration.new(key: key.to_sym, title: title, exporter: exporter.to_s)
+  def self.register_export(key, title:, exporter:, chosen: false)
+    export_registrations[key.to_sym] = ExportRegistration.new(key: key.to_sym, title: title, exporter: exporter.to_s, chosen: chosen)
   end
 
   def self.export_registration(key)

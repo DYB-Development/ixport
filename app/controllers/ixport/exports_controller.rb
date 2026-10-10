@@ -4,6 +4,7 @@ module Ixport
   class ExportsController < ApplicationController
     def index
       @registrations = Ixport.export_registrations.values
+      @templates = ExportTemplate.where(account: ixport_account).order(:name).group_by(&:key)
     end
 
     def show

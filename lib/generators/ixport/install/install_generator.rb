@@ -15,6 +15,7 @@ module Ixport
       def copy_migrations
         migration_template "create_ixport_imports.rb.erb", "db/migrate/create_ixport_imports.rb"
         migration_template "create_ixport_import_refusals.rb.erb", "db/migrate/create_ixport_import_refusals.rb"
+        migration_template "create_ixport_export_templates.rb.erb", "db/migrate/create_ixport_export_templates.rb"
       end
     end
   end

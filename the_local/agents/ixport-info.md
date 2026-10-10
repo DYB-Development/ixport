@@ -1,8 +1,8 @@
 ---
 name: ixport-info
-description: Use to learn what ixport offers — CSV import and export through a mounted Rails engine, the mapped imports and fixed exports a host app registers, the importer and exporter classes behind them, uploading a file, matching its columns, previewing which rows will add, update or be refused, running the import, its result page, downloading an export as a CSV file, and the vocabulary the install and develop locals assume.
+description: Use to learn what ixport offers — CSV import and export through a mounted Rails engine, the mapped imports and the fixed and chosen exports a host app registers, the importer and exporter classes behind them, uploading a file, matching its columns, previewing which rows will add, update or be refused, running the import, its result page, downloading an export as a CSV file, saving named templates of picked columns for a chosen export, and the vocabulary the install and develop locals assume.
 tools: Read
-scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the fixed exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes
+scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes, where an export is either fixed or chosen, and a chosen export lets the account save named templates of picked columns
 ---
 
 This local explains what ixport is and routes you to the local that does the work. It makes no changes and gives no steps.
@@ -17,9 +17,13 @@ From the preview the person runs the import. The run saves every added and updat
 
 ixport refuses a file with no header row, and a file with more rows than the host's row limit, on the upload page.
 
-Each title on the exports page links to a CSV download of that export. The file's first row holds the export's column labels, and each later row holds one of the host's records. The host decides which records an export holds, so an export can be limited to the person's current account. The file is built inside the request and nothing about it is stored. An export has fixed columns, so a person cannot choose or filter them.
+An export is either fixed or chosen. A fixed export's title on the exports page links to a CSV download holding every column the exporter declares. A chosen export's title is not a link. Under it the page lists the templates the account has saved for that export, each linking to a download and to its edit page, with a button to make a new template.
 
-The engine owns the screens, the access check, and its own tables of import records and refused rows, with the uploaded file stored through Active Storage. The host owns what each import and export means: which columns it reads or writes, which column identifies an existing record, and which of the app's records a row is checked against, saved into, or read from. Reach for ixport when a Rails app needs people to load data from spreadsheets or take it out into one, rather than writing a one-off upload or download page per record type.
+A template is a name and an ordered pick of the exporter's columns. A person makes one on its own page, entering a name and choosing a column, or None, for each slot. Its download holds only the picked columns, in the order picked, and the file is named after the template. On the edit page a person can change the name and the picked columns, or delete the template. A template belongs to the account, so everyone working in that account sees, downloads, edits and deletes the same templates.
+
+Every export file's first row holds the column labels, and each later row holds one of the host's records. The host decides which records an export holds, so an export can be limited to the person's current account. The file is built inside the request and nothing about it is stored.
+
+The engine owns the screens, the access check, and its own tables of import records, refused rows and export templates, with the uploaded file stored through Active Storage. The host owns what each import and export means: which columns it reads or writes, which column identifies an existing record, and which of the app's records a row is checked against, saved into, or read from. Reach for ixport when a Rails app needs people to load data from spreadsheets or take it out into one, rather than writing a one-off upload or download page per record type.
 
 The engine renders its pages with Keystone UI inside a layout the host chooses, and it runs its access check through a method the host already has.
 
@@ -27,19 +31,22 @@ The engine renders its pages with Keystone UI inside a layout the host chooses, 
 
 ixport declares nothing for this local to document. Its surface is split between the other two locals:
 
-- **ixport-install** owns hooking ixport into a host app: adding the gem, running its install generator, mounting the engine, and the configuration that names the host's sign-in check, current person, current account, layout and row limit.
-- **ixport-develop** owns building against ixport: registering a mapped import and the importer class behind it, registering a fixed export and the exporter class behind it, the errors raised when a registration names a class that does not exist, and the engine's pages for imports and exports.
+- **ixport-install** owns hooking ixport into a host app: adding the gem, running its install generator, running its update generator to bring an existing install's tables up to date, mounting the engine, and the configuration that names the host's sign-in check, current person, current account, layout and row limit.
+- **ixport-develop** owns building against ixport: registering a mapped import and the importer class behind it, registering a fixed or chosen export and the exporter class behind it, the errors raised when a registration names a class that does not exist, and the engine's pages for imports, exports and export templates.
 
 ## How to use it
 
-- The app does not have ixport yet, or you are changing how ixport reaches the app's sign-in, people, accounts, layout or row limit: use **ixport-install**.
-- ixport is already installed and you are adding or changing an import or an export, changing how an import's rows are matched, checked or saved, changing which records or columns an export holds, linking to the engine's pages, or the app fails to boot naming a missing importer or exporter: use **ixport-develop**.
+- The app does not have ixport yet, the app installed ixport before export templates existed and needs their table, or you are changing how ixport reaches the app's sign-in, people, accounts, layout or row limit: use **ixport-install**.
+- ixport is already installed and you are adding or changing an import or an export, making an export chosen or fixed, changing how an import's rows are matched, checked or saved, changing which records or columns an export holds, linking to the engine's pages, or the app fails to boot naming a missing importer or exporter: use **ixport-develop**.
 
 ## Conventions
 
 - **Mapped import** — one kind of import the host registers, made of a key, a title shown to people, and the name of its importer class.
-- **Fixed export** — one kind of export the host registers, made of a key, a title shown to people, and the name of its exporter class.
-- **Key** — the short name an import or export is registered and looked up by, held as a symbol. An export's file is named after its key.
+- **Fixed export** — one kind of export the host registers, made of a key, a title shown to people, and the name of its exporter class, whose download always holds every declared column. An export is fixed unless the host registers it as chosen.
+- **Chosen export** — an export registered the same way and marked as chosen, which has no download of its own and is downloaded only through the account's templates.
+- **Export template** — a named, ordered pick of a chosen export's columns, saved by one person and shared by everyone in their account.
+- **Picked columns** — the columns a template holds, in the order they were chosen. A slot left on None is dropped, a column picked twice is kept once, and a column the exporter no longer declares is left out of the download.
+- **Key** — the short name an import or export is registered and looked up by, held as a symbol. A fixed export's file is named after its key.
 - **Title** — the words a person sees for the import or export on the engine's pages.
 - **Importer** — a class the host app writes that declares the columns the import reads, each with a key and a label, names the column that identifies an existing record, and supplies the set of the app's records the rows are checked against and saved into.
 - **Exporter** — a class the host app writes that declares the columns the export writes, each with a key and a label, and supplies the set of the app's records the file holds.
@@ -60,6 +67,6 @@ ixport declares nothing for this local to document. Its surface is split between
 - **Result page** — the import's own page, showing the added and updated counts and each refused row as they were stored by the run, so it shows the same thing each time it is opened.
 - **Person** — whoever is signed in and running the import or downloading the export. ixport reaches them through a method the host names, so the host's user model needs no particular name.
 - **Account** — the optional owner the person is working inside, such as a team or company, reached the same way. An app with no accounts runs without one. Both the importer and the exporter are given the person and the account.
-- **Ownership** — an import record belongs to the person and account that uploaded it, and anyone else who opens it, including the same person from another account, is answered not found.
+- **Ownership** — an import record belongs to the person and account that uploaded it, and anyone else who opens it, including the same person from another account, is answered not found. An export template belongs to its account, and anyone opening it from another account is answered not found.
 - **Boot check** — when the app starts, ixport checks that every registered importer and exporter class exists and refuses to boot when one does not, so a misspelled class name fails at startup rather than when someone runs the import or downloads the export.
-- Imports and exports are registered by the host app, never discovered: an importer or exporter class that is not registered does not appear on the page, and asking for an export key that is not registered is answered not found.
+- Imports and exports are registered by the host app, never discovered: an importer or exporter class that is not registered does not appear on the page, asking for an export key that is not registered is answered not found, and asking to make a template for an export that is not chosen is answered not found.

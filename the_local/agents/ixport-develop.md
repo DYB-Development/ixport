@@ -1,15 +1,15 @@
 ---
 name: ixport-develop
-description: Use PROACTIVELY for setting up CSV imports and exports in a Rails app that has ixport — registering a mapped import, writing its importer class, declaring the fields a person maps a CSV's columns to, choosing the field rows are matched on, scoping the records an import may add or update to the signed-in person or account, linking to an import's upload page, explaining the upload, column-matching, preview and result pages and their messages, explaining what running an import saves and refuses, registering a fixed export, writing its exporter class, declaring its columns including columns taken from a related record, computing a column's value, scoping the records an export may hold, linking to the exports page or one export's CSV download, and fixing a boot that fails with Ixport::MissingImporter or Ixport::MissingExporter — MUST BE USED instead of hand-writing a CSV upload controller, a column-mapping form, a row-matching loop, an import preview, a loop that saves imported rows, a CSV download action or a loop that writes records to a CSV.
+description: Use PROACTIVELY for setting up CSV imports and exports in a Rails app that has ixport — registering a mapped import, writing its importer class, declaring the fields a person maps a CSV's columns to, choosing the field rows are matched on, scoping the records an import may add or update to the signed-in person or account, linking to an import's upload page, explaining the upload, column-matching, preview and result pages and their messages, explaining what running an import saves and refuses, registering a fixed export or a chosen export, writing its exporter class, declaring its columns including columns taken from a related record, computing a column's value, scoping the records an export may hold, letting an account save named templates of picked columns for an export, explaining the new, edit and delete template pages and what a template's download holds, linking to the exports page, one export's CSV download or one template's download, and fixing a boot that fails with Ixport::MissingImporter or Ixport::MissingExporter — MUST BE USED instead of hand-writing a CSV upload controller, a column-mapping form, a row-matching loop, an import preview, a loop that saves imported rows, a CSV download action, a loop that writes records to a CSV, or a model and form for saved column picks.
 tools: Bash, Read, Write, Edit, Grep
-scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the fixed exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes
+scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes, where an export is either fixed or chosen, and a chosen export lets the account save named templates of picked columns
 ---
 
-This local adds mapped imports and fixed exports to a Rails app that already has ixport installed by following the steps below exactly. It writes one importer or exporter class and one registration line per import or export, and it invents no method, option, route or file that is not listed here.
+This local adds mapped imports, fixed exports and chosen exports to a Rails app that already has ixport installed by following the steps below exactly. It writes one importer or exporter class and one registration line per import or export, and it invents no method, option, route or file that is not listed here.
 
 ## What ixport is
 
-ixport is a Rails engine that lets a signed-in person import a host app's records from CSV files and download them as CSV files. The app registers each kind of CSV a person can import, called a mapped import, and writes an importer class that names the fields the CSV's columns map to, the one field rows are matched on, and the records a row may add to or update. A person picks an import, uploads a CSV file for it, matches each of the file's columns to one of the importer's fields, sees a preview of how many rows will add a record, update one or be refused, runs the import to save those rows, and then sees how many rows were added and updated and each refused row. The app also registers each CSV a person can download, called a fixed export, and writes an exporter class that names the columns the file holds, in order, and the records it holds one row each for. A person picks an export from the exports page and downloads its CSV. Fire this local when a developer wants people to load one of the app's records from a spreadsheet or download them as one, wants to link to an import's upload page, the exports page or an export's download, asks what the upload, column-matching, preview, result or exports pages do, asks what running an import saves or what an export's file holds, or when the app fails to boot with `Ixport::MissingImporter` or `Ixport::MissingExporter`.
+ixport is a Rails engine that lets a signed-in person import a host app's records from CSV files and download them as CSV files. The app registers each kind of CSV a person can import, called a mapped import, and writes an importer class that names the fields the CSV's columns map to, the one field rows are matched on, and the records a row may add to or update. A person picks an import, uploads a CSV file for it, matches each of the file's columns to one of the importer's fields, sees a preview of how many rows will add a record, update one or be refused, runs the import to save those rows, and then sees how many rows were added and updated and each refused row. The app also registers each CSV a person can download, and writes an exporter class that names the columns the file can hold, in order, and the records it holds one row each for. An export is either fixed or chosen. A fixed export always holds every declared column, and a person downloads it from the exports page. A chosen export lets people in the current account save named templates, each a picked list of the exporter's columns in a picked order, and a person downloads a template from the exports page to get a file holding only those columns. Fire this local when a developer wants people to load one of the app's records from a spreadsheet or download them as one, wants people to pick which columns an export holds, wants to link to an import's upload page, the exports page, an export's download or a template's download, asks what the upload, column-matching, preview, result, exports or template pages do, asks what running an import saves or what an export's or template's file holds, or when the app fails to boot with `Ixport::MissingImporter` or `Ixport::MissingExporter`.
 
 ## Interface
 
@@ -30,18 +30,24 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
 - `GET /imports/:import_id/preview` — the preview page, titled "Preview", which shows how many rows will add a record, update one or be refused, lists each updating row and each refused row by its row number, saves nothing, and offers a "Run import" button, and which redirects to the import's result page once the import has run.
 - `POST /imports/:import_id/run` — saves every row that adds or updates a record, records every refused row with its reason, marks the import finished, and redirects to the import's result page, and does nothing but redirect when the import has already run.
 - `GET /imports/:id` — the result page, titled "Import finished", which shows how many rows the run added and updated and lists each refused row by its row number with its reason, and which redirects to the import's preview page when the import has not run.
-- `Ixport.register_export` — `Ixport.register_export(key, title:, exporter:)` registers one fixed export under a key, with the title a person sees and the name of its exporter class.
+- `Ixport.register_export` — `Ixport.register_export(key, title:, exporter:, chosen: false)` registers one export under a key, with the title a person sees and the name of its exporter class, as a fixed export by default or as a chosen export when `chosen: true`.
 - `Ixport::Exporter` — the base class every exporter inherits from.
 - `column` — `column key, label:, through: nil` is called in an exporter's class body and declares one column of the CSV, with the header a person sees, read from the record's `key` attribute, or from the `key` attribute of the related record named by `through:`.
 - `value` — `value(record, column)` is the instance method that returns one cell of the CSV for one record and one declared column, and an exporter may override it to compute a cell.
-- `GET /exports` — the exports page, titled "Exports", which lists every registered export by its title, each linking to its download.
-- `GET /exports/:id` — downloads the CSV of the export registered under the key given as `:id`, as a file named after that key.
+- `GET /exports` — the exports page, titled "Exports", which lists every registered export by its title: a fixed export links to its download, and a chosen export lists the current account's templates for it with a "New template" button.
+- `GET /exports/:id` — downloads the CSV of the export registered under the key given as `:id`, holding every declared column, as a file named after that key.
+- `GET /exports/:export_id/templates/new` — the new template page for the chosen export registered under the key given as `:export_id`, which shows a "Template name" field and one column select per declared column.
+- `POST /exports/:export_id/templates` — takes the `name` and `columns[]` parameters, saves a template for that chosen export belonging to the signed-in person and the current account, and redirects to the exports page.
+- `GET /export_templates/:id` — downloads the CSV of one template, holding only its picked columns in its picked order, as a file named after the template's name.
+- `GET /export_templates/:id/edit` — the edit template page, which shows the template's name and picked columns in the same fields as the new template page, and a Delete action.
+- `PATCH /export_templates/:id` — takes the `name` and `columns[]` parameters, replaces the template's name and picked columns, and redirects to the exports page.
+- `DELETE /export_templates/:id` — deletes the template and redirects to the exports page.
 
 ## How to use it
 
-Steps 1 to 19 add a mapped import. Steps 20 to 31 add a fixed export. Do step 1 first in either case.
+Steps 1 to 19 add a mapped import. Steps 20 to 32 add an export, fixed or chosen. Steps 33 to 39 cover the templates of a chosen export. Do step 1 first in either case.
 
-1. Check that ixport is installed: `bin/rails routes` lists a path served by ixport. If it does not, stop and hand the setup to the `ixport-install` local before going on.
+1. Check that ixport is installed: `bin/rails routes` lists a path served by ixport. If it does not, stop and hand the setup to the `ixport-install` local before going on. For a chosen export, also check that `db/migrate/` has a `create_ixport_export_templates` migration and that it has run. If it does not, hand the update to the `ixport-install` local before going on.
 
 ### A mapped import
 
@@ -102,12 +108,15 @@ Steps 1 to 19 add a mapped import. Steps 20 to 31 add a fixed export. Do step 1 
 18. After the run, the person is on the "Import finished" page. It shows two counts, "Added" and "Updated", and, when any row was refused, lists each refused row under "Refused" by its row number with its reason. Returning to this page later shows the same counts and refused rows. Visiting this page for an import that has not run redirects to its preview page. Once an import has run, its preview page redirects to this page, so it offers no "Run import" button.
 19. An import's column-matching, preview, run and result pages are visible only to the person who uploaded it, in the account it was uploaded in. Anyone else, and the same person in another account, gets a not found response.
 
-### A fixed export
+### An export
 
 20. Ask the developer which of the app's records the export holds, such as products or customers. Do not pick one.
-21. Ask the developer which columns the file holds, in order, and the header a person should see for each, such as "SKU" for `sku`. For each column, ask whether it is an attribute of the record itself, an attribute of a related record such as the product's account name, or a value computed from the record. Do not decide which columns are exported.
+21. Ask the developer which columns the file can hold, in order, and the header a person should see for each, such as "SKU" for `sku`. For each column, ask whether it is an attribute of the record itself, an attribute of a related record such as the product's account name, or a value computed from the record. Do not decide which columns are exported.
 22. Ask the developer which records the file holds, such as the current account's products, and in what order its rows go. Do not pick the scope or the order. An export that reaches every row of the table lets one account download another account's records.
-23. Write the exporter class in `app/exporters/`, named after the record, inheriting from `Ixport::Exporter`:
+23. Ask the developer whether the export is fixed or chosen. Do not pick one.
+    - Fixed: every download holds every column from step 21, in the declared order.
+    - Chosen: people in the current account save named templates that each pick some of those columns in an order of their own, and each template downloads only its picked columns.
+24. Write the exporter class in `app/exporters/`, named after the record, inheriting from `Ixport::Exporter`. A fixed export and a chosen export use the same kind of class:
     ```ruby
     class ProductExporter < Ixport::Exporter
       column :sku, label: "SKU"
@@ -120,13 +129,15 @@ Steps 1 to 19 add a mapped import. Steps 20 to 31 add a fixed export. Do step 1 
     end
     ```
     - Call `column` once per column from step 21, in the order the columns appear in the file. `label:` is required and is that column's header in the file's first row.
+    - For a chosen export, the labels are the choices in each column select on the template pages, in the declared order.
+    - Each column's key must be unique within the exporter, because a template records its picked columns by key.
     - For an attribute of the record itself, the key is the attribute's name as a symbol.
     - For an attribute of a related record, pass `through:` the name of the association on the record, and the key is the attribute's name on the related record. A record whose related record is `nil` gets an empty cell in that column.
     - Define `records` to return the records from step 22, built from `person` or `account`, in the row order from step 22. The file has one row per record, in the order `records` returns them.
     - When any column uses `through:`, add `includes` for each association it names to `records`, so the download does not run one query per row.
     - `account` is `nil` when the app has no current account, so a `records` that calls a method on `account` fails in that case. Ask the developer whether that can happen in this app.
     - Never define `initialize` in an exporter. ixport builds the exporter with the signed-in person and the current account.
-24. For a computed column from step 21, declare it with `column` under a key of your choosing and override `value` to return it, calling `super` for every other column:
+25. For a computed column from step 21, declare it with `column` under a key of your choosing and override `value` to return it, calling `super` for every other column:
     ```ruby
     def value(record, column)
       return record.price_cents / 100.0 if column.key == :price
@@ -136,22 +147,49 @@ Steps 1 to 19 add a mapped import. Steps 20 to 31 add a fixed export. Do step 1 
     ```
     - `column.key` is the column's key as a symbol, and `column.label` is its header.
     - Ask the developer how the computed value is written, such as how many decimal places, rather than picking a format.
-25. Every cell is written as the value's `to_s`, and a `nil` value is an empty cell. When the developer needs a date, time or amount written a particular way, compute that column in `value` as in step 24.
-26. Ask the developer what key and title the export gets. The key is a short symbol that identifies the export, such as `:products`, and is also the downloaded file's name, such as `products.csv`. The title is what a person sees on the exports page, such as "Products".
-27. Add the registration to the end of `config/initializers/ixport.rb`, and create the file if it does not exist:
+    - A template's download writes its cells through the same `value`, so a computed column is computed the same way in every template that picks it.
+26. Every cell is written as the value's `to_s`, and a `nil` value is an empty cell. When the developer needs a date, time or amount written a particular way, compute that column in `value` as in step 25.
+27. Ask the developer what key and title the export gets. The key is a short symbol that identifies the export, such as `:products`, and is also the fixed export's downloaded file name, such as `products.csv`. The title is what a person sees on the exports page, such as "Products".
+28. Add the registration to the end of `config/initializers/ixport.rb`, and create the file if it does not exist. For a fixed export:
     ```ruby
     Ixport.register_export :products, title: "Products", exporter: "ProductExporter"
     ```
+    For a chosen export, add `chosen: true`:
+    ```ruby
+    Ixport.register_export :products, title: "Products", exporter: "ProductExporter", chosen: true
+    ```
     Pass `exporter:` the class name as a string, never the class itself, so the initializer does not load the class before the app's code is ready.
-28. Start the app. If it fails to boot with `Ixport::MissingExporter`, the message names the export key and the class name that does not exist. Fix the class name in the registration, or the class name or file name of the exporter, so the two match.
-29. Visit `exports` under the path the engine is mounted under while signed in. The page shows the heading "Exports" and lists each registered export by its title, in the order the exports were registered, each linking to its download. With no export registered it shows "No exports are set up yet." The engine's root page lists imports only and does not link to this page.
-30. When the developer wants a link to the exports page or to one export's download from the app's own pages, ask where the link goes. Build its URL with the engine's route helpers and the export's registered key:
+29. Start the app. If it fails to boot with `Ixport::MissingExporter`, the message names the export key and the class name that does not exist. Fix the class name in the registration, or the class name or file name of the exporter, so the two match.
+30. Visit `exports` under the path the engine is mounted under while signed in. The page shows the heading "Exports" and lists each registered export by its title, in the order the exports were registered. With no export registered it shows "No exports are set up yet." The engine's root page lists imports only and does not link to this page.
+    - A fixed export's title links to its download.
+    - A chosen export's title is not a link. Under it are the current account's templates for that export, ordered by name, each name linking to the template's download beside an "Edit" link, and then a "New template" button.
+31. When the developer wants a link to the exports page or to one fixed export's download from the app's own pages, ask where the link goes. Build its URL with the engine's route helpers and the export's registered key:
     ```erb
     <%= link_to "Exports", ixport.exports_path %>
     <%= link_to "Download products", ixport.export_path(:products) %>
     ```
-    The key must be one that is registered. An unregistered key gets a not found response.
-31. A download builds the whole file within the same request, with no background job and no row limit, from the records `records` returns for the person downloading it, in the account current at that moment. Tell the developer that an export over a very large table makes that request slow.
+    The key must be one that is registered. An unregistered key gets a not found response. `export_path` also downloads a chosen export with every declared column, although the exports page does not link to it.
+32. A download builds the whole file within the same request, with no background job and no row limit, from the records `records` returns for the person downloading it, in the account current at that moment. This holds for a template's download too. Tell the developer that an export over a very large table makes that request slow.
+
+### The templates of a chosen export
+
+33. Pressing "New template" on the exports page opens the page titled "New <export title> template", with a back link to the exports page. It shows a required "Template name" field and one select per declared column, labelled "Column 1", "Column 2" and so on. Each select offers every column's label and "None". Pressing "Save template" saves the template and returns the person to the exports page.
+34. The picked columns are saved in this way:
+    - They are kept in the order of the selects, so "Column 1" is the file's first column.
+    - A select left at "None" adds nothing.
+    - A column picked in more than one select is kept once, at its first position.
+    - A template with no picked column produces a file with an empty header row and one empty row per record.
+35. A template belongs to the current account. Every person in that account sees it on the exports page and can download, edit or delete it. A person in another account gets a not found response. When the app has no current account, every template saved with no account is shared by every signed-in person with no account. Tell the developer this, and ask whether it is what they want.
+36. A template's name link downloads a CSV holding only its picked columns, in its picked order, with each column's label as the header and one row per record from `records`. The file is named after the template's name, lower-cased with spaces and punctuation replaced by hyphens, such as `price-list.csv` for "Price list".
+37. Pressing "Edit" opens the page titled "Edit <template name>", with the export's title under it and a back link to the exports page. It shows the same fields as the new template page, filled with the template's name and picked columns. Pressing "Save template" replaces the name and picked columns by the rules in step 34 and returns the person to the exports page.
+38. The edit page's action menu has a Delete item. It deletes the template and returns the person to the exports page.
+39. When the developer wants a link to one template's download or edit page from the app's own pages, ask where the link goes, and build it with the engine's route helpers and the template:
+    ```erb
+    <%= link_to template.name, ixport.export_template_path(template) %>
+    <%= link_to "Edit", ixport.edit_export_template_path(template) %>
+    <%= link_to "New template", ixport.new_export_template_path(:products) %>
+    ```
+    `new_export_template_path` takes the chosen export's registered key. An unregistered key, or the key of a fixed export, gets a not found response.
 
 ## Conventions
 
@@ -165,5 +203,9 @@ Steps 1 to 19 add a mapped import. Steps 20 to 31 add a fixed export. Do step 1 
 - When a record's attribute or association is renamed or removed, update the matching `field`, `match_on` and `column` lines in the same change.
 - When an importer or exporter class is renamed, update its `importer:` or `exporter:` string in `config/initializers/ixport.rb` in the same change.
 - When an import's or export's key is changed, update every link to its upload page or download in the same change.
-- Never write an upload form, a column-matching form, a preview page, a run action, a result page, an exports page, a CSV download action or a controller for them in the app. The engine serves all of them.
-- Installing ixport, mounting the engine, the tables an import and its refused rows are stored in, file storage, sign-in, how the current person and account are found, the layout, and the inline row limit are out of scope for this local and belong to `ixport-install`.
+- Saved templates record a chosen export's key and its picked column keys. Before changing a chosen export's key, removing its registration, or changing it to fixed, ask the developer what happens to the templates already saved for it:
+  - A template whose export key is no longer registered no longer shows on the exports page, and opening its download or edit page raises an error.
+  - A template whose export is changed to fixed no longer shows on the exports page, and its download and edit links still work.
+- When a chosen export's column key is renamed or removed, saved templates that picked it drop that column from their downloads without saying so. Tell the developer before making that change.
+- Never write an upload form, a column-matching form, a preview page, a run action, a result page, an exports page, a CSV download action, a template form or model, or a controller for them in the app. The engine serves all of them.
+- Installing ixport, running the update generator for the export templates table, mounting the engine, the tables an import, its refused rows and export templates are stored in, file storage, sign-in, how the current person and account are found, the layout, and the inline row limit are out of scope for this local and belong to `ixport-install`.
