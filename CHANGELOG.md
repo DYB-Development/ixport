@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-10
+
 ### Added
 - `Ixport.register_export` registers a fixed export by key, title and exporter class, and a host whose registered exporter class does not exist fails to boot.
 - `Ixport::Exporter` lists its columns with labels, a column can come from a related record with `through:`, and `records` names the records to export.
