@@ -51,6 +51,15 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/data_imports/imports/#{@import.id}/run']", count: 0
   end
 
+  test "a repeated run request adds or changes nothing" do
+    post "/data_imports/imports/#{@import.id}/run"
+    Product.find_by(sku: "A1").update!(price_cents: 999)
+
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_equal [ [ "A1", 999 ], [ "B2", 200 ] ], @account.products.order(:sku).pluck(:sku, :price_cents)
+  end
+
   private
 
   def result_on_page
