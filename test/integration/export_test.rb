@@ -67,4 +67,14 @@ class ExportTest < ActionDispatch::IntegrationTest
 
     assert_equal "SKU,Account\nA1,North\n", response.body
   end
+
+  test "the CSV holds only records from the person's current account" do
+    Ixport.register_export(:products, title: "Products", exporter: "ExportTest::ProductExporter")
+    @account.products.create!(sku: "A1", price_cents: 100)
+    Account.create!(name: "South").products.create!(sku: "S1", price_cents: 900)
+
+    get "/data_imports/exports/products"
+
+    assert_equal "SKU,Price\nA1,100\n", response.body
+  end
 end
