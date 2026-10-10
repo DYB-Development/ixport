@@ -1,488 +1,111 @@
 ---
 name: keystone_ui-develop
-description: Use PROACTIVELY for building or editing screens in a Rails app that has Keystone UI — pages, forms, tables, navigation, action menus for a record's Edit and Delete, dashboards, charts, amounts shown in green or red as a gain or loss, marketing sections, a light/dark theme switch — MUST BE USED instead of hand-writing ERB and Tailwind for UI.
-tools: Read, Write, Edit, Grep
+description: Use PROACTIVELY for building or editing screens in a Rails app that has keystone_ui — page shells with Back links and breadcrumbs, forms and fields, data tables with saved columns, desktop navigation, sidebars and bottom tabs, action menus for a record's Edit and Delete, dashboards with stat cards, charts, funnels and goal buckets, amounts shown in green or red as a gain or loss, info buttons and breakdowns, marketing sections, a light/dark theme switch — MUST BE USED instead of hand-writing ERB and Tailwind for UI.
+tools: Bash, Read, Write, Edit, Grep
 scope: UI — pages, forms, tables, navigation, dashboards
 ---
 
-This local builds screens by composing Keystone UI's `ui_*` view helpers in ERB.
+This local builds screens by composing keystone_ui's `ui_*` view helpers in ERB.
 It always works the same way: pick the page shell, fill it with the helpers that
 match the content, and write no Tailwind classes of its own.
 
-## What Keystone UI is
+## What keystone_ui is
 
-Keystone UI is a Rails engine that supplies an app's visual layer as a library of
-view helpers. Each helper renders one named piece — a page shell, a section, a
-form field, a data table, a navigation bar, a stat card, a chart — with all
-styling and dark-mode treatment owned inside the gem. Two screens built from the
-same helpers cannot drift apart, and a change to a piece updates every screen at
-once. It is mobile-first: several helpers ship distinct mobile and desktop
-treatments, which matters because these apps are often viewed in a native
-webview.
+keystone_ui is a Rails engine that supplies an app's UI as view helpers. Each
+helper renders one named piece — a page shell, a section, a form field, a data
+table, navigation, a stat card, a chart — with its styling and dark-mode
+treatment owned by the gem, so two screens built from the same helpers cannot
+drift apart. It is mobile-first, because these apps are often shown in a native
+web view: several helpers render only below or only from the `lg:` breakpoint.
 
-Fire on any request to build or change a screen, view, form, table, navigation,
-or dashboard in an app that has Keystone UI installed. If the `ui_*` helpers are
-not available in the app yet, that is the `keystone_ui-install` local's job, not
-this one's.
+Fire on any request to build or change a screen, view, form, table, navigation
+or dashboard in an app that has keystone_ui installed. If the `ui_*` helpers are
+not available in the app yet, that is `keystone_ui-install`'s job.
 
 ## Interface
 
-Every entry point is a view helper called from ERB. Keywords with defaults are
-optional; the rest are required. Symbol options are validated — an unrecognized
-one raises at render time. Two exceptions: `ui_page`'s `padding:` treats any
-value other than `:none` as `:standard`, and `ui_pipeline`'s box `accent:` falls
-back to `:muted`.
-
-Six helpers — `ui_page`, `ui_section`, `ui_page_header`, `ui_card`, `ui_alert`,
-`ui_badge` — also accept `class:`, a string of classes appended to the helper's
-outer element. See Conventions before using it.
-
-### Page shells and layout
-
-- `ui_page(max_width: :full, padding: :standard, top_offset: nil, class: nil)` —
-  takes a block. The outer wrapper for a screen. `max_width:` `:sm` `:md` `:lg`
-  `:xl` `:full`; `padding:` `:standard` or `:none`; `top_offset:` `:sm` `:md`
-  `:lg` `:xl` to clear a fixed navbar. When `ui_form_page` or `ui_show_page` was
-  called earlier on the same screen, `ui_page` renders their "Back" link, their
-  breadcrumbs, and the form page's title, in that order, at its top, above the
-  block.
-- `ui_section(title: nil, subtitle: nil, action: nil, menu: [], spacing: :md, class: nil)`
-  — takes a block. A titled block of content with an optional right-aligned
-  link. `action:` is `{ label:, href: }`; `spacing:` `:sm` `:md` `:lg`.
-  `menu:` is `[{ label:, href:, method: }, ...]`, each hash taking the keywords
-  of `ui_action_menu_item`, and renders an action menu at the right of the
-  header. The header, and with it `action:` and `menu:`, renders only when
-  `title:` is given.
-- `ui_panel(padding: :md, radius: :lg, shadow: true)` — takes a block. A bordered
-  card surface. `padding:` `:sm` `:md` `:lg`; `radius:` `:md` `:lg` `:xl`.
-- `ui_grid(cols: { default: 1 }, gap: :md, gap_x: nil, gap_y: nil)` — takes a
-  block. A responsive grid. `cols:` maps breakpoints `:default` `:sm` `:md` `:lg`
-  to a column count 1–12, e.g. `{ default: 1, md: 3 }`. `gap:` `:sm` `:md` `:lg`
-  `:xl`; passing `gap_x:`/`gap_y:` replaces `gap:` entirely.
-- `ui_card_link(href:, padding: :md, shadow: true)` — takes a block. A whole
-  panel that is one link. `padding:` `:sm` `:md` `:lg`.
-- `ui_card(title:, summary:, link:, cta: "Read more", edge_to_edge: false, class: nil)`
-  — a fixed title/summary/CTA card. `edge_to_edge: true` drops the side border and
-  corner rounding below `sm:` so it spans the full width on mobile.
-- `ui_page_header(title:, subtitle: nil, action_url: nil, action_label: "Add new", class: nil)`
-  — takes a block yielding the header. Desktop-only page title (hidden below
-  `sm:`). Call `header.action { ... }` in the block to place a custom control on
-  the right; only what `action` receives is rendered. Passing `action_url:`
-  publishes that URL and label for a mobile navbar to pick up.
-- `ui_form_page(title:, back_url: nil, subtitle: nil, trail: nil)` — the shell
-  marker for a form screen. It renders nothing where it is called. It publishes
-  the title and back URL so the navbar can render mobile header context, and
-  hands `ui_page` a "Back" link to `back_url` shown from `lg:` up, then the
-  title and subtitle shown from `md:` up. Call it before `ui_page`, outside
-  `ui_page`'s block, or none of that appears. Passing a non-empty `trail:` adds
-  breadcrumbs under the "Back" link: the trail's links followed by `title`
-  unlinked, as `ui_breadcrumbs` renders them, shown from `lg:` up. With no
-  `trail:`, it uses the trail the app supplies for the current request, if the
-  app supplies one. With no `back_url:`, the back URL is the `href` of the
-  trail's last link. A `trail:` or `back_url:` passed here always wins over the
-  supplied ones. `trail: []` marks the page a navigation tab opens directly: it
-  shows no "Back" link and no breadcrumbs, publishes no back URL when no
-  `back_url:` is passed, so the mobile header shows no back arrow, and raises
-  nothing. With no `back_url:` and no trail from either place, or a trail whose
-  last link has no `href`, rendering raises `KeystoneUi::MissingBackLink`,
-  naming the page's title. A trail with any link whose label or `href` is `nil`
-  or blank raises `KeystoneUi::IncompleteTrail`, naming the page's title, even
-  when `back_url:` is passed.
-- `ui_show_page(title:, back_url: nil, subtitle: nil, trail: nil)` — the shell
-  marker for a detail screen. It renders nothing where it is called. It
-  publishes the title, subtitle, and back URL for the navbar, and hands
-  `ui_page` a "Back" link to `back_url` shown from `lg:` up. Call it before
-  `ui_page`, outside `ui_page`'s block. It shows no title, so put
-  `ui_page_header` inside the `ui_page` block for the desktop title. `trail:`
-  and `back_url:` work as they do on `ui_form_page`, including the breadcrumbs
-  under the "Back" link, the supplied trail, the fallback to the trail's last
-  link, `trail: []` for a navigation tab's own page, and the
-  `KeystoneUi::MissingBackLink` and `KeystoneUi::IncompleteTrail` errors, and
-  the breadcrumbs end with `title` unlinked.
-- `ui_breadcrumbs(trail:, current: nil)` — a line of links shown only from `lg:`
-  up. `trail:` is `[[label, href], ...]`, from the top level down, and each pair
-  renders as a link, separated by `›`. `current:` is the page being shown,
-  rendered last, unlinked, and marked as the current page. On a form or detail
-  screen pass `trail:` to the shell instead of calling this helper.
-
-### Navigation
-
-- `ui_navbar(sticky: true)` — takes a block yielding the navbar. Fill named slots
-  on it: `logo`, `desktop_links`, `desktop_right`, `mobile_left`,
-  `mobile_center`, `mobile_right`. Desktop slots are hidden below `lg:` and the
-  mobile slots above it. `desktop_right` renders only when `desktop_links` is
-  also filled.
-- `ui_navigation` — no keywords, takes a block holding the page content. Placed
-  in the layout around `yield`, it draws the tabs the app declares with
-  `config.navigation_group` as a top bar of menus from `lg:` up, then the
-  content. It leaves out tabs whose permission check fails and groups with no
-  tab left, and below `lg:` it draws only the content. Inside the block, a
-  `navigation.with_logo do ... end` block puts the app's logo at the left end
-  of the top bar, and a `navigation.with_menus do ... end` block puts menus
-  such as the account menu and the user menu at its right end, so the layout
-  draws no second bar for them. When the preference supplied for
-  `:navigation` holds `{ "placement" => "left" }` or `"right"`, it draws a
-  sidebar on that side of the content from `lg:` up instead, with each group's
-  label above its tabs, the logo at its top and the menus at its bottom, and
-  below `lg:` the content takes the full width. Any other placement draws the
-  top bar. When that value holds an `"order"` list of
-  `{ "group" => label, "tabs" => [tab key strings] }` entries, both placements
-  draw the named groups and tabs first in that order, then the rest in
-  declared order, ignoring names no longer declared. When the app sets `config.current_tab_supplier`, the tab whose key
-  it returns for the page and that tab's group are shown as active in either
-  placement, and nothing is marked when it returns `nil`, a key no declared
-  tab has, or is not set. Check whether the app's Keystone UI
-  initializer declares navigation groups before adding desktop tabs by hand;
-  declaring them is `keystone_ui-install`'s job.
-- `ui_nav_item(label:, href:, active: false)` — one desktop navigation link.
-- `ui_nav_dropdown(title:, area:, active: false)` — takes a block. A navbar
-  dropdown; the block holds the menu links.
-- `ui_bottom_nav` — no keywords, takes a block. The mobile bottom tab bar; hidden
-  above `lg:` and inside a Hotwire Native webview.
-- `ui_bottom_nav_item(label:, href:, icon:, active: false)` — one bottom tab.
-  `icon:` is a raw SVG string.
-- `ui_mobile_header(title:, back_url:, subtitle: nil)` — a back chevron plus
-  centered title for mobile; hidden above `lg:`. Place it in the navbar's
-  `mobile_left` slot. `back_url:` must be passed, and `nil` renders the title
-  with no back chevron.
-- `ui_action_menu` — no keywords, takes a block. An ellipsis (⋯) button that
-  opens a dropdown of actions, shown at every screen size. Fill the block with
-  `ui_action_menu_item` calls.
-- `ui_action_menu_item(label:, href:, method: :get, confirm: nil)` — one entry
-  in an action menu. With `method: :get` it is a link to `href`. Any other
-  method, such as `:post`, `:patch` or `:delete`, renders a button inside its
-  own small form that sends that method to `href`, so never place such an item
-  inside a `ui_form` block, since a form cannot contain another form.
-  `confirm:` is a question Turbo asks before the item sends. With no
-  `confirm:`, a `method: :delete` item asks "<label> this? This cannot be
-  undone.", and every other method sends without asking. A `method: :get` item
-  is a plain link and ignores `confirm:`.
-- `ui_mobile_actions` — no keywords, takes a block. An ellipsis dropdown for
-  mobile actions; the block holds the menu items. Hidden above `lg:`. Use
-  `ui_action_menu` instead when the actions must also be reachable on desktop.
-- `ui_settings_link(label:, href:)` — a full-width settings row with a chevron.
-- `ui_theme_toggle` — no keywords, no block. A row of three buttons, Light, Dark
-  and System, that switches the page's theme at once and remembers the choice in
-  the `keystone_theme` cookie for a year. System follows the operating system.
-  The button for the page's current mode renders pressed. When the current mode
-  is a custom palette supplied by another gem, no button is pressed, because the
-  toggle does not offer custom.
-
-### Forms
-
-- `ui_form(action:, method: :post, multipart: false, data: nil)` — takes a block.
-  The `<form>` wrapper. `method:` may be `:patch`/`:put`/`:delete` and is
-  translated for Rails. Set `multipart: true` when the form contains a file
-  upload.
-- `ui_form_field(attribute:, label: nil, type: :text, required: false, hint: nil, placeholder: nil, min: nil, max: nil, step: nil, value: nil, options: [], errors: [], include_blank: nil, disabled: false, suggestions: [])`
-  — a labeled field with hint and error text. This is the default way to render
-  an input. `type:` `:text` `:number` `:email` `:password` `:date` `:textarea`
-  `:checkbox` `:select`. `attribute:` is used verbatim as the input's `name`, so
-  pass the full param name the controller expects, e.g. `"quote[title]"`, and
-  pass `label:` whenever the attribute is a nested name. `label:` defaults to the
-  attribute with underscores turned to spaces and the first letter capitalized.
-  `options:` is for `:select` and takes `[[label, value], ...]`; `value:` picks
-  the selected option, and a non-required select gets a leading empty option,
-  worded by `include_blank:` (for example `"Not set yet"`) or left blank without
-  it. Never add your own empty choice to `options:` as well. A
-  `:checkbox` renders its label beside the box, submits `"0"` when unchecked and
-  `"1"` when checked, and pre-checks when `value:` is `"1"`. `errors:` is an
-  array of message strings. `suggestions:` is an array of strings the browser
-  offers while the field's text is typed, and the user can still type a value
-  that is not in it. It applies to `:text`, `:number`, `:email`, `:password`
-  and `:date` fields, and a `:textarea`, `:checkbox` or `:select` ignores it.
-  The suggestion list's `id` is built from `attribute:`, so two fields with
-  suggestions on one screen need different `attribute:` values.
-- `ui_input(name:, type: :text, value: nil, placeholder: nil, disabled: false, min: nil, max: nil, step: nil)`
-  — a bare styled input with no label. `type:` `:text` `:number` `:email`
-  `:password` `:date`.
-- `ui_textarea(name:, value: nil, rows: 3, placeholder: nil, disabled: false)` —
-  a bare styled textarea.
-- `ui_select(name:, options: [], selected: nil, include_blank: nil, disabled: false)`
-  — a bare styled select. `options:` is `[[label, value], ...]`;
-  `include_blank:` is the text of a leading empty option.
-- `ui_multi_select(name:, label:, options:, selected: [])` — a dropdown of
-  checkboxes all posting under `name`, used verbatim; pass an array name such as
-  `"status[]"` so every checked value arrives. `options:` is
-  `[[label, value], ...]`; `selected:` is the values to pre-check. The trigger
-  reads "All <label>" when nothing is checked and "N selected" otherwise.
-- `ui_file_upload(name:, label: nil, accept: nil, multiple: false, hint: nil)` —
-  a drop zone with drag-and-drop and selected-file feedback. Requires the
-  enclosing form to be multipart.
-- `ui_color_picker(name:, value: "#000000", label: nil)` — a swatch that opens a
-  hue/saturation panel and writes the hex into a hidden input named `name`.
-- `ui_radio_card(name:, value:, label:, hint: nil, info: nil, checked: false)`
-  — a selectable card backed by a real radio input; selection styling is pure
-  CSS. `hint:` is a line of text always shown under the label. `info:` is
-  longer text about the option, kept hidden: passing it adds an info button on
-  the row with the label, named "About <label>" for screen readers, and the
-  text shows in a panel floating below the card while the button is hovered,
-  and tapping the button toggles it. With no `info:` the card has no info
-  button.
-- `ui_checkbox_row(name:, value:, label:, hint: nil, info: nil, checked: false)`
-  — a real checkbox with its label and optional hint inside one `<label>`, so a
-  tap anywhere on the row toggles the box. A checked row submits `value` under
-  `name`; give several rows the same array name, e.g. `"shown[]"`, to submit the
-  checked values as a list. An unchecked row submits nothing. `hint:` is a line
-  of text always shown under the label. `info:` works as it does on
-  `ui_radio_card`: passing it adds an info button on the line with the label,
-  named "About <label>" for screen readers, and the text shows in a panel
-  floating below the row while the button is hovered, and tapping the button
-  toggles it. With no `info:` the row has no info button.
-- `ui_option_card(name:, value:, selected: false, input_data: {}, label_data: {})`
-  — takes a block. A radio whose visible body is whatever the block renders.
-  `input_data:`/`label_data:` become `data-*` attributes on the input and label.
-
-### Tables
-
-- `ui_data_table(items:, columns:, empty_message: nil, sort: nil, sort_direction: nil, sort_url: nil, hidden_columns: [], key: nil)`
-  — takes a block yielding the table. `items:` are records or hashes; each cell
-  value is read by calling the column key on the item, falling back to `item[key]`.
-  `columns:` accepts plain `{ key: "Label" }` hashes or `Keystone::Ui::Column`
-  objects. In the block, `table.link(:column_key) { |item| url }` turns that
-  column's cells into links and `table.actions { |item| ... }` appends a
-  right-aligned actions column. With no actions column, the last data
-  column's header and cells are both right-aligned, so put the column of
-  amounts last to line them up under their header. Each row's actions render inside an action
-  menu, so the `actions` block holds `ui_action_menu_item` calls and nothing
-  else, never buttons or bare links. Sorting requires all three of `sort:` (the
-  current column key), `sort_direction:` (`:asc`/`:desc`), and `sort_url:` (a
-  lambda taking `(column_key, direction)` and returning a URL); headers then
-  render as links that flip direction. `hidden_columns:` drops columns
-  server-side and only affects columns declared `hideable: true`. `key:` (a
-  symbol or string) names the table so it looks up a saved layout through the
-  app's preference supplier. When the supplier returns a saved value for the
-  key that lists `"hidden_columns"`, the hideable columns in that list replace
-  the ones passed in `hidden_columns:`, and a saved empty list shows every
-  column. When the saved value is `nil` or lists no `"hidden_columns"`, the
-  table keeps the columns `hidden_columns:` hides. When the saved value lists
-  `"column_order"`, an array of column keys, the hideable columns render in
-  that order, followed by any hideable columns the list leaves out in the order
-  they were declared. Columns that are not hideable keep their declared place,
-  and the hideable ones fill the remaining places. With no `"column_order"` the
-  columns keep their declared order. Whenever the supplier
-  returns a save address, the table renders a "Columns" menu in a row above
-  itself, aligned right, that saves to it as `ui_column_picker` does and shows
-  the same message when a save fails, including for a person with nothing saved
-  yet. That menu lists the hideable columns in
-  the order the table shows them and leaves ticked exactly the ones the table
-  shows. When the
-  supplier returns nothing, when no supplier is set, or when no `key:` is
-  passed, the table renders from `hidden_columns:` with no Columns menu. In
-  every case `hidden_columns:` is the table's default layout.
-- `Keystone::Ui::Column.new(key, header_text, mobile_hidden: false, sortable: false, hideable: false, locked: false)`
-  — a column with per-column options, for when a `{ key: "Label" }` hash is not
-  enough. `mobile_hidden:` hides the column below `sm:`; `sortable:` opts it into
-  sort headers; `hideable:` lets the Columns menu hide it and move it, and a
-  saved `"column_order"` place it. `locked: true` on the table's first column
-  keeps its header and cells in view while the rest of the table scrolls
-  sideways. A locked column that is not first renders as an ordinary column. A
-  locked column is never hideable, even with `hideable: true`: it is left out of
-  the Columns menu, `hidden_columns:` and a saved layout cannot hide it, and a
-  saved `"column_order"` cannot move it.
-- `ui_column_picker(columns:, hidden_columns: [], save_url: nil)` — a "Columns"
-  dropdown with one row per `hideable` column, in the order `columns:` lists
-  them. Each row has a checkbox and an up and a down button that move the
-  column one place; the first row's up button and the last row's down button
-  are disabled, and after a move the disabled buttons follow the new first and
-  last rows. A hidden column's name renders greyed, and unticking a box greys
-  its name at once. Pass it the same columns, in the order the table shows
-  them, and the same hidden keys as the table. Ticking, unticking and moving
-  change only the open menu and send nothing. When the menu closes, by its
-  Columns button or by a click outside it, it sends one `PATCH save_url` with
-  JSON `{ "hidden_columns": ["key", ...], "column_order": ["key", ...] }` and a
-  `X-CSRF-Token` header, then reloads the page. A menu closed with nothing
-  changed sends nothing. `column_order` lists every hideable column's key in
-  the menu's order when it closes. With no `save_url:` it sends nothing. The app must provide that endpoint and persist
-  both lists. The endpoint must answer with a success status when it has saved
-  them. When it answers with an error status, or the request cannot reach the
-  server, the menu does not reload the page: it shows "Your column changes were
-  not saved." under the Columns button, and puts its boxes and its order back
-  to what the table shows. The picker does not reorder the table: beside a table without
-  `key:`, the app must pass the table and the picker its columns in the saved
-  order itself. A table
-  given `key:` renders its own Columns menu when the supplier gives a save
-  address, so never add `ui_column_picker` beside such a table.
-
-### Content and status
-
-- `ui_button(label:, href: nil, variant: :primary, size: :md, type: :submit, data: nil)`
-  — renders an `<a>` when `href:` is given and a `<button>` otherwise. `variant:`
-  `:primary` `:secondary` `:danger`; `size:` `:sm` `:md` `:lg`; `type:` applies
-  only to the button form.
-- `ui_badge(label:, variant: :neutral, class: nil)` — a pill. `variant:`
-  `:neutral` `:success` `:danger` `:warning` `:info`.
-- `ui_figure(text:, tone: :neutral)` — no block. One figure, such as an amount,
-  as inline text with no pill or box around it. `tone:` `:neutral` prints it in
-  the surrounding text colour, `:success` in green and `:danger` in red; any
-  other symbol raises `KeyError`. `text:` is printed as given, so format
-  numbers, currency and any minus sign before passing it. Its output can be
-  passed anywhere a string is shown, such as a `ui_data_table` cell value or
-  column label.
-- `ui_alert(message:, type: :info, title: nil, dismissible: false, class: nil)` —
-  a banner.
-  `type:` `:info` `:success` `:warning` `:error`. `dismissible: true` adds a
-  close control.
-- `ui_progress(value:, max:, label: nil)` — a labeled progress bar. The percent
-  is `value / max`, rounded and clamped at 100.
-- `ui_stat_card(label:, value:, variant: :neutral, suffix: nil, definition: nil, calculation: nil, change: nil, href: nil)`
-  — a single metric tile. `variant:` `:neutral` `:success` `:danger` `:warning`
-  `:info` colors the value. `change:` is a signed number rendered as `▲ 4.2%` in
-  green when positive, `▼` in red when negative, plain when zero. `href:` makes
-  the value a link to its drill-down screen; only the value is linked, never the
-  whole card. Passing `definition:` and/or `calculation:` adds an info button
-  whose details show in a panel floating below the card while the button is
-  hovered or focused, and tapping the button toggles it.
-- `ui_copy_button(text:, label: "Copy", success_message: "Copied!", error_message: "Failed!")`
-  — copies `text:` to the clipboard.
-- `ui_code(language: nil, caption: nil)` — takes a block holding the code. The
-  caption is a header strip above the block; `language:` sets the `language-*`
-  class for a highlighter.
-- `ui_disclosure(open: false)` — takes a block yielding the component. Fill its
-  `summary` slot with the clickable header; the rest of the block is the body.
-  Native `<details>` — no JavaScript.
-- `ui_calculation(groups:, summary: "How this is worked out")` — no block. Shows
-  how a figure was reached, closed by default under a row reading `summary:`.
-  `groups:` is `[{ title:, lines: [{ label:, working:, result: }, ...] }, ...]`;
-  `title:` is optional, `lines:` is required and a group without it raises
-  `KeyError`, and a line with any key other than those three raises
-  `ArgumentError`. Each line renders as three columns — label, working, result
-  — with the result right-aligned. Every value is printed as given, so format
-  numbers and currency before passing them. Place it directly under the figure
-  it explains, such as a `ui_stat_card`.
-- `ui_info(summary:)` — an info button, named "More about this" for screen
-  readers, placed inline beside the thing it explains, and sits level with the
-  middle of the text beside it. `summary:` is a short
-  line of text shown in a floating panel while the button is hovered. The block
-  is optional and holds the full detail. With a block, tapping or clicking the
-  button toggles a second floating panel holding the block's content, and the
-  summary stays hover-only. With no block, tapping the button toggles the
-  summary itself. A second tap closes what the first opened, a click anywhere
-  else on the page closes the detail panel, and scrolling the page closes both
-  panels. Each panel opens just under the button with its right edge on the
-  button's right edge, the first time it opens as well as every later time,
-  and stays at least 8 pixels from the left edge of the screen. The detail
-  panel is wider than the summary panel, and the text in both wraps, so pass
-  plain sentences and add no line breaks or widths of your own. The panels are
-  placed against the screen, so the button can sit
-  inside a table or any other container that clips its contents without the
-  panels being cut off. Both panels render inside a `<span>`, so the block may
-  hold text and inline elements only, such as a `ui_breakdown`, and never a
-  `<div>`, list or table. Hovering and tapping both need the gem's Stimulus
-  controllers registered, and without them the button shows nothing.
-- `ui_breakdown(lines:, total:)` — no block. A list of amounts ending in their
-  total. `lines:` is `[{ amount:, label: }, ...]` and `total:` is one
-  `{ amount:, label: }`, both required. Each line renders its amount with its
-  label beside it, and the total renders last, set apart from the lines above
-  it. Every value is printed as given and nothing is added up, so compute the
-  total and format numbers and currency before passing them. How the amounts
-  and labels line up, and how the total is set apart, come from the
-  `ks-breakdown` classes in the keystone_ui-styles gem, and the helper sets no
-  widths or spacing of its own. It renders inline elements only, so it can sit
-  inside a `ui_info` block.
-- `ui_accordion(items: [])` — a stack of independently expandable rows. `items:`
-  is `[{ question:, answer: }, ...]`.
-- `ui_tab_switcher(tabs:)` — takes a block. `tabs:` is an array of label strings;
-  the first is active on load. The block renders below the tab bar. Selecting a
-  tab dispatches a `tab-switcher:change` event carrying the clicked index —
-  showing and hiding the matching panels is the app's job.
-- `ui_modal(title:, size: :md)` — takes a block holding the body. `size:` `:sm`
-  `:md` `:lg` `:xl`. Renders hidden, and closes on its own close button and on a
-  backdrop click. Nothing in the gem opens it: the modal's outermost element
-  carries the `hidden` class, and the app's own code must remove that class to
-  show it. A `data-action="modal#open"` placed outside the modal does nothing.
-- `ui_swipe_deck(items:, empty_title: "All done!", empty_subtitle: nil)` — takes
-  a block yielding the deck. Call `deck.item { |item| ... }` in the block to
-  render one card's face. Accepting a card (button or swipe right) dispatches a
-  bubbling `swipe-deck:complete` event and rejecting (button or swipe left)
-  dispatches `swipe-deck:skip`. Both carry `detail.itemId` — the item's `id`, or
-  its position in `items:` when it has none — and `detail.card`; `complete` also
-  carries `detail.value`, read from an input inside the card's face marked
-  `data-swipe-deck-value`, or `null`. The app must listen and persist the
-  outcome.
-
-### Charts and analytics
-
-- `ui_chart_card(title:, height: :md)` — takes a block holding a chart. `height:`
-  `:sm` `:md` `:lg`.
-- `ui_line_chart(series:, labels: nil, dates: nil, height: :md)` — a line chart
-  with one line per series. `series:` is
-  `[{ name:, data:, color:, dashed: }, ...]` where `data:` is the array of
-  values, and `color:` (a CSS color string for the line) and `dashed: true` are
-  optional. `height:` `:sm` `:md` `:lg`. Pass exactly one of `labels:` and
-  `dates:` for the horizontal axis: passing both, or neither, raises
-  `ArgumentError`. `labels:` is an array of strings, one per value, spaced
-  evenly and shown as written. `dates:` is an array of `Date`, `Time` or
-  `DateTime` values, one per value, matched to each series' `data:` by
-  position. A dated chart places each point by its day, so a gap of a week is
-  seven times as wide as a gap of a day. Its axis runs from the first day to
-  the last, marks only whole days, and reads each day as a date such as
-  "Oct 2, 2026", which is also the heading a hovered point shows. The time of
-  day is dropped, so pass one value per day.
-- `ui_funnel(steps:, shape: :bars)` — a conversion funnel. `steps:` is
-  `[{ label:, value:, color: }, ...]` in order, with `color:` optional. Each
-  step's width is its value as a share of the first step's value, and the
-  percent shown between two steps is the second step's value divided by the
-  first's. Each step takes the next colour in the order `:accent` `:sky`
-  `:violet` `:amber` `:rose`, starting again after `:rose`; a step passing one
-  of those symbols as `color:` uses it instead, and any other symbol raises.
-  Values are printed as given. Divide-by-zero safe, no JavaScript. `shape:`
-  `:bars` draws one bar per step, left-aligned, with the label and value on a
-  row above it and a `↓ N%` caption between two bars. `shape: :joined` draws
-  one shape: each step's value over its label in a column on the left, each
-  step's block centred at its width, and between two blocks a neutral band
-  that narrows from the block above to the block below, with the percent on it.
-  Any other `shape:` raises `ArgumentError`.
-- `ui_bucket(goal:, actual:, label: nil, over: :success)` — an upright container
-  for one target, filled from the bottom toward `goal:`. It shows the optional
-  `label` on top, then `goal`, the container, `actual`, and the percent reached.
-  `goal` and `actual` must be numbers: a string such as `"9,000"`, or `nil`,
-  raises `ArgumentError` at render time. They are printed as Ruby prints them,
-  with no thousands separators, so `9000` shows as `9000` and `9000.0` as
-  `9000.0`. A value read from a decimal column is a `BigDecimal`, which prints
-  as `0.9e4`, so convert it with `to_i` or `to_f` first. The percent is
-  `actual / goal * 100` rounded and **not**
-  clamped (so 150% shows as 150%), and it is 0 when `goal` is zero. The fill
-  stops at the top once the goal is reached. Within the goal the fill uses the
-  accent colour; over it the fill turns green with `over: :success` or amber with
-  `over: :warning`, and any other symbol raises. No JavaScript.
-- `ui_bucket_series(buckets:)` — a row of buckets that wraps onto more rows on
-  narrow screens. `buckets:` is an array of hashes, each taking the same keywords
-  as `ui_bucket`, e.g. `[{ goal: 10, actual: 7, label: "Mon" }, ...]`.
-- `ui_pipeline(title:, boxes:, links:, subtitle: nil)` — a staged flow diagram
-  for event flows, approval chains, or state machines. `boxes:` is
-  `[{ label:, count:, accent:, action: }, ...]` where `count:` and `accent:`
-  (`:amber` `:emerald` `:danger` `:muted`) are optional, and `action:` is
-  `{ url:, label:, params:, variant: }` rendering a button that POSTs `params`
-  to `url`. `links:` has exactly one fewer entry than `boxes:`, each
-  `{ url:, params:, broken: }`, rendering a ✓/✗ toggle between two boxes that
-  POSTs to flip its state. The app owns every endpoint these post to.
-
-### Marketing sections
-
-- `ui_hero(title:, subtitle: nil, badge: nil, layout: :split)` — takes a block
-  holding the call-to-action buttons, and yields the component so its `aside`
-  slot can hold an image or panel. `layout:` `:split` (content beside the aside)
-  or `:centered`.
-- `ui_cta_banner(title:, subtitle: nil)` — takes a block holding the
-  call-to-action buttons.
-- `ui_feature_grid(title:, features:, subtitle: nil)` — a responsive grid of
-  feature cards. `features:` is `[{ icon:, title:, description: }, ...]` where
-  `icon:` is a raw SVG or HTML string.
+- `ui_page` — the outer wrapper of a screen, holding the page's content.
+- `ui_form_page` — marks a screen as a form screen and gives it its title, Back link and breadcrumbs.
+- `ui_show_page` — marks a screen as a detail screen and gives it its Back link and breadcrumbs.
+- `ui_page_header` — the desktop title of a page, with an optional control on its right.
+- `ui_breadcrumbs` — a line of links to the pages above the current one, shown from `lg:` up.
+- `ui_section` — a titled block of content with an optional link and action menu in its header.
+- `ui_grid` — a responsive grid with a column count per breakpoint.
+- `ui_panel` — a bordered card surface holding any content.
+- `ui_card_link` — a panel that is one link as a whole.
+- `ui_card` — a fixed card of title, summary and call-to-action link.
+- `ui_navbar` — a navigation bar with named slots for desktop and mobile.
+- `ui_navigation` — draws the app's declared navigation groups as a top bar or a sidebar around the page content.
+- `ui_nav_item` — one desktop navigation link.
+- `ui_nav_dropdown` — a navbar dropdown menu.
+- `ui_bottom_nav` — the mobile bottom tab bar.
+- `ui_bottom_nav_item` — one tab in the bottom tab bar.
+- `ui_mobile_header` — a mobile back arrow and centred title.
+- `ui_mobile_actions` — an ellipsis menu of actions shown only below `lg:`.
+- `ui_action_menu` — an ellipsis menu of actions shown at every screen size.
+- `ui_action_menu_item` — one action in an action menu, as a link or a button sending a method.
+- `ui_settings_link` — a full-width settings row with a chevron.
+- `ui_theme_toggle` — Light, Dark and System buttons that switch and remember the page's theme.
+- `ui_form` — the form element wrapping a form's fields.
+- `ui_form_field` — a labelled input, textarea, checkbox or select with hint and error text.
+- `ui_input` — a bare styled input with no label.
+- `ui_textarea` — a bare styled textarea with no label.
+- `ui_select` — a bare styled select with no label.
+- `ui_multi_select` — a dropdown of checkboxes posting every checked value.
+- `ui_file_upload` — a file drop zone with selected-file feedback.
+- `ui_color_picker` — a colour swatch that writes a hex value into a hidden input.
+- `ui_radio_card` — a selectable card backed by a radio input.
+- `ui_checkbox_row` — a checkbox with its label and hint, toggled by a tap anywhere on the row.
+- `ui_option_card` — a radio whose visible body is whatever its block renders.
+- `ui_data_table` — a table of records with links, row actions, sorting and hideable columns.
+- `Keystone::Ui::Column` — a table column with options a `{ key: "Label" }` hash cannot carry.
+- `ui_column_picker` — a Columns menu that saves which columns are hidden and their order to an app endpoint.
+- `ui_button` — a link or a button styled as a button.
+- `ui_badge` — a coloured pill holding a short label.
+- `ui_figure` — one amount as inline text, coloured as a gain or a loss.
+- `ui_alert` — a banner message, optionally dismissible.
+- `ui_progress` — a labelled progress bar.
+- `ui_stat_card` — a single metric tile with optional change, link and info button.
+- `ui_copy_button` — a button that copies text to the clipboard.
+- `ui_code` — a block of code with an optional caption.
+- `ui_disclosure` — a native expandable section with a clickable summary.
+- `ui_calculation` — the steps behind a figure, closed under a summary row.
+- `ui_info` — an inline info button showing a summary, and optional detail, in floating panels.
+- `ui_breakdown` — a list of amounts ending in their total.
+- `ui_accordion` — a stack of question-and-answer rows that expand independently.
+- `ui_tab_switcher` — a row of tabs that reports which one was selected.
+- `ui_modal` — a hidden dialog the app's own code opens.
+- `ui_swipe_deck` — a stack of cards accepted or rejected by button or swipe.
+- `ui_chart_card` — a titled card holding a chart.
+- `ui_line_chart` — a line chart with one line per series, over labels or dates.
+- `ui_funnel` — a conversion funnel drawn as bars or one joined shape.
+- `ui_bucket` — an upright container filled toward a goal.
+- `ui_bucket_series` — a wrapping row of buckets.
+- `ui_pipeline` — a staged flow diagram with buttons and breakable links that post to the app.
+- `ui_hero` — a marketing hero with title, call-to-action buttons and an aside.
+- `ui_cta_banner` — a marketing banner holding call-to-action buttons.
+- `ui_feature_grid` — a responsive grid of feature cards.
 
 ## How to use it
 
+Every entry point is a view helper called from ERB, apart from
+`Keystone::Ui::Column`. Keywords with defaults are optional and the rest are
+required. A symbol option outside the listed values raises at render time, with
+two exceptions: `ui_page`'s `padding:` treats any value other than `:none` as
+`:standard`, and a `ui_pipeline` box's `accent:` falls back to `:muted`.
+
 1. Confirm the helpers are available in the app. If they are not, stop and hand
-   off to `keystone_ui-install` — do not hand-roll the markup in the meantime.
+   off to `keystone_ui-install`, and do not hand-write the markup meanwhile.
 
 2. Find the closest existing screen in `app/views/` and read it. Match its
-   composition before inventing one; that screen is the house style.
+   composition before inventing one, since that screen is the house style.
 
-3. Pick the page shell for what you are building:
-   - a form screen → `ui_form_page`, then `ui_page` holding the form
-   - a detail screen → `ui_show_page`, then `ui_page` holding `ui_page_header`
-     and the details
-   - anything else → `ui_page`, with `ui_page_header` for the desktop title.
+3. Pick the page shell.
+
+   - A form screen → `ui_form_page`, then `ui_page` holding the form.
+   - A detail screen → `ui_show_page`, then `ui_page` holding `ui_page_header`
+     and the details.
+   - Anything else → `ui_page`, with `ui_page_header` for the desktop title.
 
    ```erb
    <%= ui_form_page(title: "New quote", back_url: quotes_path) %>
@@ -493,169 +116,422 @@ outer element. See Conventions before using it.
    <% end %>
    ```
 
-   The shell call always comes first and sits outside `ui_page`'s block,
-   because `ui_page` renders what the shell handed it at its own top. A form or
-   detail screen without `ui_page` shows no desktop "Back" link or form title.
-   Those shells supply the desktop "Back" link themselves, so never add a
-   second back link or button to those screens. Whether a screen
-   shows breadcrumbs under its "Back" link, and which parent screens the trail
-   names, is the developer's choice, so ask before passing `trail:`. A screen
-   a navigation tab opens directly, such as a bottom tab's own page, passes
-   `trail: []` and no `back_url:`, so it shows no "Back" link and no back
-   arrow; which screens those are is the developer's choice, so ask. Check
-   first whether the app's Keystone UI initializer sets a `trail_supplier`,
-   which supplies a trail for every request: if it
-   does, a screen whose supplied trail is right passes neither `trail:` nor
-   `back_url:`, and passes its own only where the supplied one is wrong. If the
-   app supplies no trail, every form and detail screen passes `back_url:` or
-   `trail:`, since a screen with neither raises `KeystoneUi::MissingBackLink`
-   when it renders. Every link in a trail needs both a label and an `href`, or
-   the screen raises `KeystoneUi::IncompleteTrail`. Setting up a supplied trail is `keystone_ui-install`'s job. Below `lg:` the
-   back link comes from `ui_mobile_header`, which the navbar renders from the
-   title and back URL these shells publish. Check the app's layout: if it does not
-   already render `ui_mobile_header` from that published context, ask the
-   developer whether to wire it before adding more screens that depend on it.
+   - `ui_page(max_width: :full, padding: :standard, top_offset: nil, class: nil)`
+     takes a block. `max_width:` is `:sm` `:md` `:lg` `:xl` `:full`,
+     `padding:` is `:standard` or `:none`, and `top_offset:` is `:sm` `:md`
+     `:lg` `:xl` to clear a fixed navbar. At its top, above the block, it
+     renders what an earlier `ui_form_page` or `ui_show_page` on the same screen
+     handed it: the "Back" link, then the breadcrumbs, then the form page's
+     title.
+   - `ui_form_page(title:, back_url: nil, subtitle: nil, trail: nil)` renders
+     nothing where it is called. It publishes the title and back URL for the
+     navbar's mobile header, and hands `ui_page` a "Back" link to `back_url`
+     shown from `lg:` up, then the title and subtitle shown from `md:` up.
+   - `ui_show_page(title:, back_url: nil, subtitle: nil, trail: nil)` renders
+     nothing where it is called. It publishes the title, subtitle and back URL
+     for the navbar, and hands `ui_page` the "Back" link. It shows no title, so
+     put `ui_page_header` inside the `ui_page` block.
+   - Call the shell before `ui_page` and outside its block, or the "Back" link,
+     breadcrumbs and title do not appear. Never add a second back link or
+     button to a shell's screen.
+   - `trail:` is `[[label, href], ...]` from the top level down. A non-empty
+     trail adds breadcrumbs under the "Back" link, ending with `title`
+     unlinked, shown from `lg:` up. With no `trail:`, the shell uses the trail
+     the app supplies for the request, if it supplies one. With no
+     `back_url:`, the back URL is the `href` of the trail's last link. A
+     `trail:` or `back_url:` passed to the shell always wins over the supplied
+     one.
+   - `trail: []` marks a page a navigation tab opens directly. It shows no
+     "Back" link and no breadcrumbs, and with no `back_url:` it publishes no
+     back URL, so the mobile header shows no back arrow.
+   - With no `back_url:`, no trail from either place, or a trail whose last
+     link has no `href`, rendering raises `KeystoneUi::MissingBackLink` naming
+     the page's title. A trail with any link whose label or `href` is `nil` or
+     blank raises `KeystoneUi::IncompleteTrail` naming the page's title, even
+     when `back_url:` is passed.
+   - Check whether the app's keystone_ui initializer sets a `trail_supplier`.
+     If it does, a screen whose supplied trail is right passes neither `trail:`
+     nor `back_url:`. If it does not, every form and detail screen passes
+     `back_url:` or `trail:`. Setting up a supplier is `keystone_ui-install`'s
+     job.
+   - Ask the developer whether a screen shows breadcrumbs and which parent
+     screens its trail names. Ask which screens a navigation tab opens
+     directly, since those pass `trail: []`.
+   - `ui_page_header(title:, subtitle: nil, action_url: nil, action_label: "Add new", class: nil)`
+     takes a block yielding the header and is hidden below `sm:`. Call
+     `header.action { ... }` in the block to place a control on its right, and
+     only what `action` receives is rendered. `action_url:` publishes that URL
+     and label for a mobile navbar to pick up.
+   - `ui_breadcrumbs(trail:, current: nil)` renders `trail:` as links separated
+     by `›`, then `current:` unlinked and marked as the current page, shown
+     only from `lg:` up. On a form or detail screen pass `trail:` to the shell
+     instead of calling it.
+   - Below `lg:` the back link comes from `ui_mobile_header`, rendered by the
+     navbar from the title and back URL the shells publish. If the layout does
+     not render `ui_mobile_header` from that context, ask the developer whether
+     to wire it before adding more screens that depend on it.
 
-4. Lay out the body with `ui_section` for each titled group, `ui_grid` for
-   multi-column arrangements, and `ui_panel` or `ui_card_link` for card
-   surfaces. Nest them; each takes a block.
+4. Lay out the body. Each of these takes a block and they nest.
 
-5. Fill the body with the leaf helpers from the Interface above. Reach for the
-   most specific one that fits — `ui_form_field` over `ui_input`,
-   `ui_data_table` over a hand-built `<table>`, `ui_stat_card` over a panel with
-   text in it. To make a stat card clickable, pass `href:` — never wrap it in
-   `ui_card_link`, because a tap on the info button would then follow the link.
-   To show the arithmetic behind a figure, put `ui_calculation` under it rather
-   than a hand-built list. Which lines and groups to show is the app's own
-   calculation, so ask the developer which steps a reader needs to see.
-   To explain a figure or label that is not a stat card, put `ui_info` beside
-   it, with the one-line explanation as `summary:` and, when the figure is a
-   sum of parts, a `ui_breakdown` in its block. Which amounts the breakdown
-   lists, and the wording of the summary, are the app's own, so ask the
-   developer rather than pick. If an info button shows nothing when hovered or
-   tapped, the gem's Stimulus controllers are not registered, so stop and hand
-   that part to `keystone_ui-install`. If a breakdown renders as one run of
-   text with no columns and no separate total, the app's keystone_ui-styles
-   version does not define the `ks-breakdown` classes, so stop and hand that
-   part to `keystone_ui-install` as well, and add no classes to fix it.
-   To show an amount as a gain or a loss, use `ui_figure` with `tone:` rather
-   than a `ui_badge` or a colour class. Which amounts are coloured, and whether
-   a value counts as a gain or a loss, is the app's own rule, so ask the
-   developer rather than pick. If a figure with `:success` or `:danger` shows in
-   the plain text colour, the app's keystone_ui-styles version does not define
-   the `ks-figure` and `ks-tone-*` classes, so stop and hand that part to
-   `keystone_ui-install`, and add no classes to fix it.
-   A field whose value must be one of a fixed list is a `:select` with
-   `options:`, and a field that accepts any text and offers common values is a
-   text field with `suggestions:`. Which one a field is, and which values it
-   suggests, is the app's own rule, so ask the developer rather than pick.
-   On a radio card or a checkbox row, text every reader needs to choose goes in `hint:` and
-   text only some will want goes in `info:`. Which is which is the app's own
-   wording, so ask the developer rather than pick.
-   For a line chart, pass `dates:` when each value belongs to a calendar day
-   and `labels:` when the horizontal axis is anything else, such as week names
-   or categories. With `dates:`, a day with no value leaves a wider gap between
-   its neighbours rather than a point at zero. Whether a missing day is left
-   out or passed as a zero is the app's own rule, so ask the developer rather
-   than pick. Never format dates into strings and pass them as `labels:`.
-   For a funnel, whether it is drawn as separate bars or as one joined shape
-   is the developer's choice, so ask before passing `shape:`. If a joined
-   funnel shows its blocks but no band between them, the app's
-   keystone_ui-styles version does not define the `ks-funnel-band` classes, so
-   stop and hand that part to `keystone_ui-install`, and add no classes to fix
-   it.
-   Put the actions on a record, such as Edit and Delete, in an action menu
-   rather than in a row of buttons: `menu:` on the `ui_section` that shows the
-   record, `table.actions` for a table row, or `ui_action_menu` anywhere else.
-   A delete item asks for confirmation on its own, so pass `confirm:` only
-   when the developer wants different wording. A `:post`, `:patch` or `:put`
-   item sends without asking, so ask the developer whether that action needs
-   a question, and pass it as `confirm:` if it does.
+   - `ui_section(title: nil, subtitle: nil, action: nil, menu: [], spacing: :md, class: nil)`
+     — `action:` is `{ label:, href: }` and renders a right-aligned link.
+     `menu:` is `[{ label:, href:, method: }, ...]`, each hash taking the
+     keywords of `ui_action_menu_item`, and renders an action menu at the right
+     of the header. `spacing:` is `:sm` `:md` `:lg`. The header, with its
+     `action:` and `menu:`, renders only when `title:` is given.
+   - `ui_grid(cols: { default: 1 }, gap: :md, gap_x: nil, gap_y: nil)` —
+     `cols:` maps `:default` `:sm` `:md` `:lg` to a count from 1 to 12, such as
+     `{ default: 1, md: 3 }`. `gap:` is `:sm` `:md` `:lg` `:xl`, and passing
+     `gap_x:` or `gap_y:` replaces `gap:` entirely.
+   - `ui_panel(padding: :md, radius: :lg, shadow: true)` — `padding:` is `:sm`
+     `:md` `:lg` and `radius:` is `:md` `:lg` `:xl`.
+   - `ui_card_link(href:, padding: :md, shadow: true)` — `padding:` is `:sm`
+     `:md` `:lg`.
+   - `ui_card(title:, summary:, link:, cta: "Read more", edge_to_edge: false, class: nil)`
+     takes no block. `edge_to_edge: true` drops the side border and corner
+     rounding below `sm:` so the card spans the full width on mobile.
 
-6. For a table, decide how columns are declared. Use `{ key: "Label" }` hashes
-   when every column is plain. Switch the whole set to `Keystone::Ui::Column`
-   objects as soon as one column needs `mobile_hidden:`, `sortable:`,
-   `hideable:`, or `locked:`.
+5. Wire navigation in the layout.
 
-   To keep a wide table's first column, such as a name, in view while the rest
-   scrolls sideways, declare it first with `locked: true`. Whether a table locks
-   its first column is the developer's choice, so ask rather than pick. If the
-   locked column stays in place but the scrolled columns show through its
-   cells, the app's keystone_ui-styles version does not define the
-   `ks-table-header-locked` and `ks-table-cell-locked` classes, so stop and hand
-   that part to `keystone_ui-install`, and add no classes to fix it.
+   - `ui_navigation` takes no keywords and a block holding the page content, so
+     it goes around `yield`. It draws the tabs the app declares with
+     `config.navigation_group` as a top bar of menus from `lg:` up, then the
+     content, and below `lg:` it draws only the content. It leaves out tabs
+     whose permission check fails and groups with no tab left.
+   - Inside its block, `navigation.with_logo do ... end` puts the app's logo at
+     the left of the top bar, and `navigation.with_menus do ... end` puts menus
+     such as the account menu at its right, so the layout draws no second bar.
+     With no group left, it draws only the content unless a logo or menus are
+     set, in which case the top bar holds just those.
+   - When the preference supplied for `:navigation` holds
+     `{ "placement" => "left" }` or `"right"`, it draws a sidebar on that side
+     from `lg:` up instead, with each group's label above its tabs, the logo at
+     its top and the menus at its bottom. Any other placement draws the top
+     bar. An `"order"` list of `{ "group" => label, "tabs" => [tab key strings] }`
+     entries draws the named groups and tabs first, in that order, then the
+     rest in declared order, ignoring names no longer declared.
+   - When the app sets `config.current_tab_supplier`, the tab whose key it
+     returns and that tab's group show as active in either placement. A `nil`
+     key, a key no declared tab has, or no supplier marks nothing.
+   - Check whether the app's initializer declares navigation groups before
+     adding desktop tabs by hand. Declaring groups, the placement and order
+     preference, and the current tab supplier are `keystone_ui-install`'s job.
+   - `ui_navbar(sticky: true)` takes a block yielding the navbar. Fill its
+     slots: `logo`, `desktop_links`, `desktop_right`, `mobile_left`,
+     `mobile_center`, `mobile_right`. Desktop slots are hidden below `lg:` and
+     mobile slots from `lg:` up. `desktop_right` renders only when
+     `desktop_links` is also filled.
+   - `ui_nav_item(label:, href:, active: false)` is one desktop link.
+     `ui_nav_dropdown(title:, area:, active: false)` takes a block holding the
+     menu links.
+   - `ui_bottom_nav` takes no keywords and a block of
+     `ui_bottom_nav_item(label:, href:, icon:, active: false)` calls, where
+     `icon:` is a raw SVG string. The bar is hidden from `lg:` up and inside a
+     Hotwire Native web view.
+   - `ui_mobile_header(title:, back_url:, subtitle: nil)` is hidden from `lg:`
+     up and goes in the navbar's `mobile_left` slot. `back_url:` must be
+     passed, and `nil` renders the title with no back arrow.
+   - `ui_settings_link(label:, href:)` renders one settings row.
+   - `ui_theme_toggle` takes no keywords and no block. Its buttons switch the
+     theme at once and store the choice in the `keystone_theme` cookie for a
+     year, and System follows the operating system. The button for the current
+     mode renders pressed, and none is pressed when the mode is a custom
+     palette supplied by another gem. Ask the developer where it goes, such as
+     a settings screen, the navbar's `desktop_right` or a mobile menu. It stays
+     correct across page loads and Turbo visits only when the layout's `<html`
+     tag carries the theme attributes and the gem's Stimulus controllers are
+     registered. If the tag carries nothing for the theme, stop and hand that
+     part to `keystone_ui-install`.
 
-   For a table whose hideable columns a user should be able to choose and keep,
-   check whether the app's Keystone UI initializer sets a
-   `preference_supplier`. If it does, pass `key:` and the default
-   `hidden_columns:`, and add no `ui_column_picker`. The order the columns are
-   declared in is the default order, and only columns declared
-   `hideable: true` can be hidden or moved from the Columns menu. Which key
-   names the table, which columns are hideable, and which it hides by default
-   are the developer's choice, so ask rather than pick. If the app sets no supplier, either use `ui_column_picker`
-   with an endpoint the app owns, as in step 7, or hand setting up a supplier to
-   `keystone_ui-install`, and ask the developer which. If a Columns menu shows
-   no greyed name for a hidden column, the app's keystone_ui-styles version is
-   older than 0.11.0, so stop and hand that part to `keystone_ui-install`, and
-   add no classes to fix it.
+6. Build forms.
 
-7. Wire up anything that posts back. Several helpers render controls whose
-   endpoints the app must own — the column picker's save URL, the pipeline's box
-   and link URLs, the swipe deck's outcome events, the modal's open trigger, the
-   tab switcher's panel visibility. Each is named in the Interface. These are
-   real decisions about the app's domain: where a preference is persisted, what
-   a stage's action does, what happens when a card is accepted. Do not invent
-   routes or a persistence strategy — put the choice to the developer, then
-   implement what they pick.
+   - `ui_form(action:, method: :post, multipart: false, data: nil)` takes a
+     block. `method:` may be `:patch`, `:put` or `:delete`, sent as Rails
+     expects. Set `multipart: true` when the form holds a file upload.
+   - `ui_form_field(attribute:, label: nil, type: :text, required: false, hint: nil, placeholder: nil, min: nil, max: nil, step: nil, value: nil, options: [], errors: [], include_blank: nil, disabled: false, suggestions: [])`
+     is the default way to render a field. `type:` is `:text` `:number`
+     `:email` `:password` `:date` `:textarea` `:checkbox` `:select`.
+   - `attribute:` is used as the input's `name` as given, so pass the full
+     param name, such as `"quote[title]"`, and pass `label:` whenever it is a
+     nested name. `label:` defaults to the attribute with underscores turned to
+     spaces and the first letter capitalized. `errors:` is an array of message
+     strings.
+   - A `:select` takes `options:` as `[[label, value], ...]`, and `value:`
+     picks the selected option. A select that is not required gets a leading
+     empty option, worded by `include_blank:` or left blank without it, so
+     never add an empty choice to `options:` as well.
+   - A `:checkbox` renders its label beside the box, submits `"0"` unchecked
+     and `"1"` checked, and is checked when `value:` is `"1"`.
+   - `suggestions:` is an array of strings the browser offers while typing, and
+     the user can still type any value. It applies to `:text` `:number`
+     `:email` `:password` `:date` and is ignored by the other types. Its list
+     is identified by `attribute:`, so two fields with suggestions on one
+     screen need different `attribute:` values.
+   - A value that must be one of a fixed list is a `:select`, and a free value
+     with common choices is a text field with `suggestions:`. Ask the developer
+     which a field is and which values it offers.
+   - `ui_input(name:, type: :text, value: nil, placeholder: nil, disabled: false, min: nil, max: nil, step: nil)`
+     takes `:text` `:number` `:email` `:password` `:date`.
+     `ui_textarea(name:, value: nil, rows: 3, placeholder: nil, disabled: false)`
+     and `ui_select(name:, options: [], selected: nil, include_blank: nil, disabled: false)`
+     are the bare forms of the other two. Use them only where a label does not
+     belong.
+   - `ui_multi_select(name:, label:, options:, selected: [])` posts every
+     checked value under `name` as given, so pass an array name such as
+     `"status[]"`. `options:` is `[[label, value], ...]` and `selected:` is the
+     values to check. Its button reads "All <label>" with nothing checked and
+     "N selected" otherwise.
+   - `ui_file_upload(name:, label: nil, accept: nil, multiple: false, hint: nil)`
+     needs the enclosing form to be multipart.
+   - `ui_color_picker(name:, value: "#000000", label: nil)` writes the chosen
+     hex value into a hidden input named `name`.
+   - `ui_radio_card(name:, value:, label:, hint: nil, info: nil, checked: false)`
+     and `ui_checkbox_row(name:, value:, label:, hint: nil, info: nil, checked: false)`
+     share `hint:` and `info:`. `hint:` is a line always shown under the label.
+     `info:` adds an info button beside the label, named "About <label>" for
+     screen readers, that shows the text in a panel below while hovered and
+     toggles it when tapped. Text every reader needs goes in `hint:` and text
+     only some want goes in `info:`, so ask the developer which is which.
+   - A checked `ui_checkbox_row` submits `value` under `name`, an unchecked one
+     submits nothing, and rows sharing an array name such as `"shown[]"`
+     submit the checked values as a list.
+   - `ui_option_card(name:, value:, selected: false, input_data: {}, label_data: {})`
+     takes a block rendering the card's body. `input_data:` and `label_data:`
+     become `data-*` attributes on the input and the label.
 
-8. To let users pick light or dark, place `ui_theme_toggle`. Where it goes — a
-   settings screen, the navbar's `desktop_right` or a mobile menu — is the
-   developer's choice, so ask before placing it. It only stays correct across
-   page loads and Turbo visits when the app's layout already writes the theme
-   onto its `html` tag and the gem's Stimulus controllers are registered. If the
-   layout's `<html` tag carries nothing for the theme, stop and hand that part to
-   `keystone_ui-install`.
+7. Put the actions on a record, such as Edit and Delete, in an action menu
+   rather than a row of buttons: `menu:` on the `ui_section` showing the record,
+   `table.actions` for a table row, or `ui_action_menu` anywhere else.
 
-9. Read back what you wrote and delete every Tailwind class and inline `style`
-   you added. If the result still needs one, that is a signal the wrong helper
-   was chosen — go back to step 5. Bring it to the developer only if no helper
-   fits.
+   - `ui_action_menu` takes no keywords and a block of `ui_action_menu_item`
+     calls, and shows at every screen size. `ui_mobile_actions` takes the same
+     block and is hidden from `lg:` up, so use it only for actions that
+     desktop reaches some other way.
+   - `ui_action_menu_item(label:, href:, method: :get, confirm: nil)` is a link
+     with `method: :get`. Any other method renders a button in its own small
+     form sending that method, so never place such an item inside a `ui_form`
+     block.
+   - `confirm:` is a question Turbo asks before the item sends. With no
+     `confirm:`, a `:delete` item asks "<label> this? This cannot be undone."
+     and every other method sends without asking. A `:get` item ignores
+     `confirm:`. Ask the developer whether a `:post`, `:patch` or `:put` action
+     needs a question.
+
+8. Build tables.
+
+   - `ui_data_table(items:, columns:, empty_message: nil, sort: nil, sort_direction: nil, sort_url: nil, hidden_columns: [], key: nil)`
+     takes a block yielding the table. `items:` are records or hashes, and a
+     cell's value is the column key called on the item, or `item[key]`.
+   - `columns:` takes `{ key: "Label" }` hashes when every column is plain.
+     Switch the whole set to `Keystone::Ui::Column` objects once one column
+     needs an option.
+   - `Keystone::Ui::Column.new(key, header_text, mobile_hidden: false, sortable: false, hideable: false, locked: false)`
+     — `mobile_hidden:` hides the column below `sm:`, `sortable:` gives it a
+     sort header, and `hideable:` lets it be hidden and moved.
+     `locked: true` on the first column keeps it in view while the rest scrolls
+     sideways, a locked column that is not first renders as an ordinary one,
+     and a locked column is never hideable. Ask the developer whether a wide
+     table locks its first column.
+   - In the block, `table.link(:column_key) { |item| url }` turns a column's
+     cells into links, and `table.actions { |item| ... }` adds a right-aligned
+     actions column whose block holds only `ui_action_menu_item` calls. With no
+     actions column, the last column is right-aligned, so put a column of
+     amounts last.
+   - Sorting needs all three of `sort:` (the current column key),
+     `sort_direction:` (`:asc` or `:desc`) and `sort_url:` (a lambda taking
+     `(column_key, direction)` and returning a URL). Headers then render as
+     links that flip direction.
+   - `hidden_columns:` is the table's default layout and drops only hideable
+     columns. The declared order is the default order.
+   - For a table whose columns a user chooses and keeps, check whether the
+     app's initializer sets a `preference_supplier`. If it does, pass `key:`
+     and the default `hidden_columns:`, and add no `ui_column_picker`. A saved
+     `"hidden_columns"` list replaces `hidden_columns:`, an empty saved list
+     shows every column, and a saved `"column_order"` places the hideable
+     columns in that order while other columns keep their place. When the
+     supplier returns a save address, the table renders its own Columns menu
+     above it. Ask the developer which key names the table, which columns are
+     hideable, and which are hidden by default.
+   - If the app sets no supplier, ask the developer whether to use
+     `ui_column_picker` with an endpoint the app owns, or to hand setting up a
+     supplier to `keystone_ui-install`.
+   - `ui_column_picker(columns:, hidden_columns: [], save_url: nil)` lists the
+     hideable columns in the order given, each with a checkbox and up and down
+     buttons. Pass it the columns in the order the table shows them and the
+     same hidden keys. When the menu closes with a change, it sends one
+     `PATCH save_url` with a CSRF token and the JSON
+     `{ "hidden_columns": [...], "column_order": [...] }`, then reloads.
+     `column_order` lists every hideable key. The app's endpoint must store both
+     lists and answer with a success status. On an error status or no
+     connection the menu shows "Your column changes were not saved." and puts
+     its boxes and order back. It does not reorder the table, so the app passes
+     both the table and the picker their columns in the saved order.
+
+9. Show content and status.
+
+   - `ui_button(label:, href: nil, variant: :primary, size: :md, type: :submit, data: nil)`
+     renders a link with `href:` and a button without it. `variant:` is
+     `:primary` `:secondary` `:danger`, `size:` is `:sm` `:md` `:lg`, and
+     `type:` applies only to the button.
+   - `ui_badge(label:, variant: :neutral, class: nil)` — `variant:` is
+     `:neutral` `:success` `:danger` `:warning` `:info`.
+   - `ui_alert(message:, type: :info, title: nil, dismissible: false, class: nil)`
+     — `type:` is `:info` `:success` `:warning` `:error`, and `dismissible: true`
+     adds a close button.
+   - `ui_progress(value:, max:, label: nil)` shows `value / max` as a percent,
+     rounded and capped at 100.
+   - `ui_copy_button(text:, label: "Copy", success_message: "Copied!", error_message: "Failed!")`.
+   - `ui_code(language: nil, caption: nil)` takes a block holding the code.
+     `caption:` is a strip above it and `language:` sets the `language-*`
+     class for a highlighter.
+   - `ui_disclosure(open: false)` takes a block yielding the component. Fill
+     its `summary` slot with the header, and the rest of the block is the body.
+   - `ui_accordion(items: [])` — `items:` is `[{ question:, answer: }, ...]`.
+
+10. Explain figures.
+
+    - `ui_stat_card(label:, value:, variant: :neutral, suffix: nil, definition: nil, calculation: nil, change: nil, href: nil)`
+      — `variant:` is `:neutral` `:success` `:danger` `:warning` `:info` and
+      colours the value. `change:` is a signed number shown as `▲ 4.2%` in
+      green, `▼` in red, or plain at zero. `href:` links the value only, so
+      never wrap a stat card in `ui_card_link`. `definition:` and
+      `calculation:` add an info button whose panel shows while hovered or
+      focused and toggles when tapped.
+    - `ui_figure(text:, tone: :neutral)` prints one amount inline. `tone:`
+      `:neutral` uses the surrounding text colour, `:success` green and
+      `:danger` red, and any other symbol raises `KeyError`. Its output can go
+      anywhere a string is shown, such as a table cell. Use it, not a badge or
+      a colour class, for a gain or a loss, and ask the developer which amounts
+      are coloured and what counts as a gain.
+    - `ui_calculation(groups:, summary: "How this is worked out")` shows the
+      steps behind a figure, closed under a row reading `summary:`. `groups:`
+      is `[{ title:, lines: [{ label:, working:, result: }, ...] }, ...]`.
+      `title:` is optional, a group without `lines:` raises `KeyError`, and a
+      line with another key raises `ArgumentError`. Put it directly under the
+      figure it explains, and ask the developer which steps a reader needs.
+    - `ui_info(summary:)` is an info button beside the thing it explains,
+      named "More about this" for screen readers. `summary:` is a short line
+      shown while hovered. With a block, a tap toggles a wider panel holding
+      the block, and the summary stays hover-only. With no block, a tap
+      toggles the summary. A click elsewhere closes the detail and scrolling
+      closes both. The panels are not cut off by a table or other clipping
+      container. The block may hold only text and inline elements, such as a
+      `ui_breakdown`, never a `<div>`, list or table. Pass plain sentences with
+      no line breaks.
+    - `ui_breakdown(lines:, total:)` — `lines:` is `[{ amount:, label: }, ...]`
+      and `total:` is one `{ amount:, label: }`. It adds nothing up, so
+      compute the total. It renders inline, so it can sit in a `ui_info` block.
+      Ask the developer which amounts it lists and how the summary is worded.
+    - Every value these print is shown as given, so format numbers, currency
+      and minus signs before passing them.
+
+11. Draw charts and analytics.
+
+    - `ui_chart_card(title:, height: :md)` takes a block holding a chart, with
+      `height:` `:sm` `:md` `:lg`.
+    - `ui_line_chart(series:, labels: nil, dates: nil, height: :md)` —
+      `series:` is `[{ name:, data:, color:, dashed: }, ...]`, where `color:`
+      is a CSS colour and `dashed: true` is optional. Pass exactly one of
+      `labels:` and `dates:`, or it raises `ArgumentError`. `labels:` are
+      strings spaced evenly. `dates:` are `Date`, `Time` or `DateTime` values,
+      one per value, placed by day and read as dates such as "Oct 2, 2026",
+      with the time of day dropped. Use `dates:` for calendar days and never
+      format dates into `labels:`. A day with no value leaves a wider gap, so
+      ask the developer whether a missing day is left out or passed as zero.
+    - `ui_funnel(steps:, shape: :bars)` — `steps:` is
+      `[{ label:, value:, color: }, ...]` in order. Each width is the value's
+      share of the first step's value, and the percent between two steps is
+      the second divided by the first. Colours run `:accent` `:sky` `:violet`
+      `:amber` `:rose` and repeat, and `color:` picks one of those or raises.
+      `:bars` draws one bar per step with a `↓ N%` caption between bars.
+      `:joined` draws one shape with a narrowing band holding the percent
+      between blocks. Any other `shape:` raises `ArgumentError`. Ask the
+      developer which shape they want.
+    - `ui_bucket(goal:, actual:, label: nil, over: :success)` shows the label,
+      `goal`, the container, `actual` and the percent reached. `goal` and
+      `actual` must be numbers, so a string or `nil` raises `ArgumentError`.
+      They print as Ruby prints them, so convert a `BigDecimal` with `to_i` or
+      `to_f`. The percent is not capped and is 0 for a zero goal. Over the goal
+      the fill turns green with `over: :success` or amber with `over: :warning`.
+    - `ui_bucket_series(buckets:)` takes an array of hashes with the keywords
+      of `ui_bucket`, such as `[{ goal: 10, actual: 7, label: "Mon" }, ...]`.
+    - `ui_pipeline(title:, boxes:, links:, subtitle: nil)` — `boxes:` is
+      `[{ label:, count:, accent:, action: }, ...]`, with `accent:` one of
+      `:amber` `:emerald` `:danger` `:muted`, and `action:` is
+      `{ url:, label:, params:, variant: }`, a button that POSTs `params` to
+      `url`. `links:` has one fewer entry than `boxes:`, each
+      `{ url:, params:, broken: }`, a toggle between two boxes that POSTs to
+      flip its state.
+
+12. Add interactive pieces whose outcome the app owns.
+
+    - `ui_modal(title:, size: :md)` takes a block holding the body, with
+      `size:` `:sm` `:md` `:lg` `:xl`. It renders with the `hidden` class and
+      closes on its close button and on a backdrop click. Nothing in the gem
+      opens it, so the app's code removes `hidden`.
+    - `ui_tab_switcher(tabs:)` takes an array of label strings and a block
+      rendered below the tabs. The first tab is active on load, and a click
+      sends a `tab-switcher:change` event with the clicked index. Showing and
+      hiding the panels is the app's code.
+    - `ui_swipe_deck(items:, empty_title: "All done!", empty_subtitle: nil)`
+      takes a block yielding the deck, where `deck.item { |item| ... }` renders
+      one card's face. Accepting sends a bubbling `swipe-deck:complete` event
+      and rejecting sends `swipe-deck:skip`. Both carry `detail.itemId` (the
+      item's `id`, or its position) and `detail.card`, and `complete` carries
+      `detail.value` from an input marked `data-swipe-deck-value`, or `null`.
+    - For these, the pipeline's URLs and the column picker's save URL, do not
+      invent routes or how the outcome is stored. Ask the developer, then
+      build what they pick.
+
+13. Build marketing sections.
+
+    - `ui_hero(title:, subtitle: nil, badge: nil, layout: :split)` takes a
+      block holding the call-to-action buttons and yields the component, so
+      its `aside` slot can hold an image or panel. `layout:` is `:split` or
+      `:centered`.
+    - `ui_cta_banner(title:, subtitle: nil)` takes a block holding the
+      buttons.
+    - `ui_feature_grid(title:, features:, subtitle: nil)` — `features:` is
+      `[{ icon:, title:, description: }, ...]`, where `icon:` is a raw SVG or
+      HTML string.
+
+14. Read back what you wrote and delete every Tailwind class and inline `style`
+    you added. If the result still needs one, a different helper fits, so go
+    back to the steps above. Bring it to the developer only if no helper fits.
+
+    If a piece renders unstyled where it should not — an info button that
+    shows nothing, a breakdown in one run of text, a `:success` or `:danger`
+    figure in plain colour, a joined funnel with no band, a locked column the
+    others show through, or a Columns menu with no greyed name for a hidden
+    column — the app's Stimulus controllers or keystone_ui-styles version are
+    out of date. Stop and hand that part to `keystone_ui-install`, and add no
+    classes to fix it.
 
 ## Conventions
 
-- **Helpers only.** Call `ui_*` helpers from ERB. Never name a component class
-  directly in an app. `Keystone::Ui::Column` is the one exception — it is a value
-  object passed as an argument, not a thing that renders.
-- **Never hand-write Tailwind for something a helper covers.** Utility classes
-  layered onto a helper's output fight the component and drift the moment the gem
-  updates. The gem owns spacing, color, borders, radius, shadow, and dark mode.
-- **Never restyle a helper from the outside** — no wrapper div that overrides its
-  padding or width, no CSS targeting its markup. Choose a different option
-  symbol instead, or say the helper does not fit.
-- **`class:` needs the developer's approval.** The six helpers that accept it
-  append whatever it holds to their outer element, so it can override anything
-  the gem sets. Before passing it, name the class and the reason to the
-  developer and wait for a yes; if the same class keeps being needed, it is a
-  missing option in the gem.
-- **Semantic color only.** Themed color is `accent-*` (the brand hue) and
-  `surface-*` (the neutral family). Never write a literal color into a view;
-  changing the palette is install-local territory.
-- **Options are per-helper.** `variant:`, `size:`, `padding:`, and `spacing:` do
-  not share one vocabulary — a button's `variant:` and a badge's `variant:`
-  accept different symbols. Use the values listed above; a wrong symbol raises at
-  render time rather than degrading quietly.
-- **Containers take blocks, leaves take keywords.** Helpers that wrap content
-  yield; helpers that render one thing are configured entirely by keywords.
-  Composite helpers (the navbar, the hero, the disclosure) yield the component so
-  named slots can be filled. Helpers that yield a receiver for registration —
-  the data table, page header, and swipe deck — only render what was registered
-  through it, so anything else emitted inside their block is discarded.
-- **Mobile is not an afterthought.** Several helpers render only on one side of
-  the `lg:` (or `sm:`) breakpoint — page headers, mobile headers, mobile actions,
-  bottom navigation, breadcrumbs. The action menu is the exception and shows at
-  every size. A screen needs both treatments; check the small viewport
-  before calling it done.
-- Out of scope for this local: installing or upgrading the gem, changing the
-  palette or theme defaults, and editing the components themselves. Building a
-  new UI primitive belongs in the gem, not in a host app's views — raise it with
-  the developer rather than approximating it locally.
+- **Helpers only.** Call `ui_*` helpers from ERB and never name a component
+  class in the app. `Keystone::Ui::Column` is the one exception, since it is
+  passed as an argument and renders nothing.
+- **Never hand-write Tailwind for something a helper covers.** The gem owns
+  spacing, colour, borders, radius, shadow and dark mode.
+- **Never restyle a helper from outside** — no wrapper that overrides its
+  padding or width, and no CSS aimed at its markup. Choose a different option
+  instead, or say the helper does not fit.
+- **`class:` needs the developer's approval.** `ui_page`, `ui_section`,
+  `ui_page_header`, `ui_card`, `ui_alert` and `ui_badge` append it to their
+  outer element, where it can override anything the gem sets. Name the class
+  and the reason and wait for a yes.
+- **Semantic colour only.** Themed colour is `accent-*` and `surface-*`. Never
+  write a literal colour into a view.
+- **Options are per helper.** A button's `variant:` and a badge's `variant:`
+  take different symbols, so use the values listed for that helper.
+- **Containers take blocks, leaves take keywords.** The data table, page header
+  and swipe deck render only what is registered through the object they yield,
+  so anything else emitted in their block is dropped.
+- **Check both screen sizes.** Page headers, mobile headers, mobile actions,
+  bottom navigation, breadcrumbs and `ui_navigation`'s bars render on one side
+  of `lg:` or `sm:` only, so a screen needs both treatments.
+- Out of scope: installing or upgrading the gem, its configuration, the theme
+  attributes on the layout, and the palette, which belong to
+  `keystone_ui-install`. A new UI piece belongs in the gem, so raise it with
+  the developer rather than building it in the app's views.
