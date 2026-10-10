@@ -16,15 +16,13 @@ module Ixport
     validate :file_within_inline_row_limit, on: :create
 
     def run!(importer)
-      rows = RowWalk.new(self, importer).rows
-      rows.each do |row|
-        if row.outcome == :refused
-          refusals.create!(row_number: row.number, reason: row.reason)
-        else
-          row.record.save!
-        end
+      with_lock do
+        walk_and_save(importer) unless finished?
       end
-      update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
+    end
+
+    def finished?
+      status == "finished"
     end
 
     def importer_class
@@ -36,6 +34,18 @@ module Ixport
     end
 
     private
+
+    def walk_and_save(importer)
+      rows = RowWalk.new(self, importer).rows
+      rows.each do |row|
+        if row.outcome == :refused
+          refusals.create!(row_number: row.number, reason: row.reason)
+        else
+          row.record.save!
+        end
+      end
+      update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
+    end
 
     def file_has_header_row
       errors.add(:file, "This file has no header row.") if CSV.parse_line(incoming_file_contents).blank?

@@ -50,6 +50,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ "finished", 2, 1 ], import.reload.values_at(:status, :added_count, :updated_count)
   end
 
+  test "running a finished import again adds or changes nothing" do
+    import = import_of("SKU,Price\nB2,200\nC3,lots\n")
+    import.run!(importer)
+
+    import.run!(importer)
+
+    assert_equal [ 1, 1 ], [ @account.products.count, import.refusals.count ]
+  end
+
   private
 
   def importer
