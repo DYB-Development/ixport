@@ -9,7 +9,7 @@ This local hooks ixport into a Rails app by following the steps below exactly. I
 
 ## What ixport is
 
-ixport is a Rails engine that lets a signed-in person upload a CSV file, match its columns to a host app's fields, and import the rows as records. Hook it in when a Rails app needs people to load data from spreadsheets.
+ixport is a Rails engine that lets a signed-in person upload a CSV file, match its columns to a host app's fields, and preview which rows would add, update or be refused, without writing any record yet. Hook it in when a Rails app needs people to load data from spreadsheets.
 
 ## Interface
 
@@ -55,7 +55,7 @@ ixport is a Rails engine that lets a signed-in person upload a CSV file, match i
 8. Compare the app's method and layout names with the defaults in the Interface section. Every default matches a Jumpstart app, so an app that uses all of the defaults needs no configuration. Where any name differs, or a method does not exist, ask the developer which method or layout to use rather than picking one:
    - The sign-in check: the method that sends a person who is not signed in to sign in, such as `:authenticate_user!` or `:require_login`.
    - The current person: the method returning the signed-in person, such as `:current_user` or `:current_member`. An import belongs to this person, and another person who opens it gets a not found response.
-   - The current account: the method returning the team or company the person works inside, such as `:current_account` or `:current_team`. An import belongs to this account too, and the same person who opens it from another account gets a not found response. Ask whether the app has accounts at all, since the import table allows an import with no account.
+   - The current account: the method returning the team or company the person works inside, such as `:current_account` or `:current_team`. An import belongs to this account too, and the same person who opens it from another account gets a not found response. Ask whether the app has accounts at all. ixport calls the named method on every page, so an app with no accounts still needs a method of that name callable from `ApplicationController`, and it returns `nil`. Ask the developer before adding one.
    - The layout: the file in `app/views/layouts/` that ixport's pages should be drawn inside.
    - The inline row limit: ask only if the developer wants a limit other than 1,000 rows.
 9. Write only the settings that differ from the defaults into a new initializer, `config/initializers/ixport.rb`:
@@ -77,4 +77,4 @@ ixport is a Rails engine that lets a signed-in person upload a CSV file, match i
 - Run the install generator once. A second run stops with an error naming the migration the app already has, and adds nothing. Do not delete or edit the copied migration once it has been run.
 - When the app renames its sign-in method, its current person or account method, or the layout ixport uses, update the matching line in `config/initializers/ixport.rb` in the same change.
 - A setting given the same value as its default is left out of the initializer. Remove a line when its value goes back to the default.
-- Setting up the imports that appear on the page, and the upload and mapping pages they lead to, is out of scope for this local and belongs to `ixport-develop`.
+- Setting up the imports that appear on the page, and the upload, mapping and preview pages they lead to, is out of scope for this local and belongs to `ixport-develop`.

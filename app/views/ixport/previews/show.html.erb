@@ -1,0 +1,32 @@
+<%= ui_show_page(title: "Preview", back_url: import_mapping_path(@import)) %>
+<%= ui_page(max_width: :md) do %>
+  <%= ui_page_header(title: "Preview") %>
+  <%= ui_grid(cols: { default: 1, sm: 3 }) do %>
+    <%= ui_stat_card(label: "Will add", value: tag.span(@counts[:add], data: { count: "add" })) %>
+    <%= ui_stat_card(label: "Will update", value: tag.span(@counts[:update], data: { count: "update" })) %>
+    <%= ui_stat_card(label: "Will be refused", value: tag.span(@counts[:refused], data: { count: "refused" })) %>
+  <% end %>
+  <% if @update_rows.any? %>
+    <%= ui_section(title: "Will update") do %>
+      <ul>
+        <% @update_rows.each do |row| %>
+          <%= tag.li(data: { update_row: true }) do %>
+            Row <%= tag.span(row.number, data: { row_number: true }) %>
+          <% end %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+  <% if @refused_rows.any? %>
+    <%= ui_section(title: "Will be refused") do %>
+      <ul>
+        <% @refused_rows.each do |row| %>
+          <%= tag.li(data: { refused_row: true }) do %>
+            Row <%= tag.span(row.number, data: { row_number: true }) %>
+            <%= tag.span(row.reason, data: { reason: true }) %>
+          <% end %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+<% end %>

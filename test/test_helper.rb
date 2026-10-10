@@ -13,6 +13,12 @@ ActiveRecord::Schema.define do
   create_table :accounts, force: true do |t|
     t.string :name
   end
+
+  create_table :products, force: true do |t|
+    t.references :account
+    t.string :sku
+    t.integer :price_cents
+  end
 end
 
 ActiveRecord::Migration.verbose = false

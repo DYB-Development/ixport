@@ -29,10 +29,10 @@ built on ViewComponent; hook it in before building any screen with those helpers
   `preference_supplier` (a callable that supplies the saved hidden columns and
   column order of a data table given a `key:`, and the address its Columns menu
   saves to, and the navigation's placement under the key `:navigation`),
-  `navigation_group` (a labelled group of desktop tabs that `ui_navigation`
-  draws, each tab declared with `tab key, label:, href:, permitted:`),
+  `navigation_group` (a labelled group of desktop tabs that the navigation
+  helper draws, each tab declared with `tab key, label:, href:, permitted:`),
   `current_tab_supplier` (a callable that supplies the key of the declared tab
-  the current page belongs to, so `ui_navigation` marks it and its group
+  the current page belongs to, so the navigation marks it and its group
   active),
   and the `tailwind_imports` and `tailwind_sources` lists (extra CSS files and
   scan paths added to the Tailwind build).
@@ -48,7 +48,7 @@ built on ViewComponent; hook it in before building any screen with those helpers
 ## How to use it
 
 1. Confirm the prerequisites: Ruby >= 3.2 and **tailwindcss-rails v4+** in the
-   host app. The gem brings ViewComponent and keystone_ui-styles 0.12.0 or later with it.
+   host app. The gem brings ViewComponent and keystone_ui-styles 0.14.0 or later with it.
    Tailwind does not have to be initialized first, because the generator creates
    the stylesheet if it is missing.
 
@@ -235,9 +235,9 @@ built on ViewComponent; hook it in before building any screen with those helpers
      pages, and `nil` for a page whose Back link comes from its own
      `back_url:`.
    - Every other form and show page must end up with a Back link. A page that
-     passes no `back_url:`, and has no trail or a trail whose last link has no
-     address, raises `KeystoneUi::MissingBackLink` naming the page's title when
-     it renders. The message tells the developer to pass `back_url:` or
+     passes no `back_url:`, and has no trail or a trail whose last link's
+     address is `nil`, raises `KeystoneUi::MissingBackLink` naming the page's
+     title when it renders. The message tells the developer to pass `back_url:` or
      `trail:`, to supply a trail through `trail_supplier`, or to pass
      `trail: []` on a nav tab's own page.
    - Every link in a trail needs both a label and an address. A trail with a
@@ -298,7 +298,7 @@ built on ViewComponent; hook it in before building any screen with those helpers
      to what the table shows.
    - For the key `:navigation` the supplier returns the person's navigation
      placement as `{ value: { "placement" => "left" } }`, with `"left"`,
-     `"right"` or `"top"`. `ui_navigation` draws a sidebar on the left or the
+     `"right"` or `"top"`. The navigation draws a sidebar on the left or the
      right of the page content on desktop screens for the first two, and the
      top bar for `"top"`, `nil`, a value with no `"placement"` string key, or
      any other placement.
@@ -306,7 +306,7 @@ built on ViewComponent; hook it in before building any screen with those helpers
      tabs under `"order"`, as
      `[ { "group" => "Admin" }, { "group" => "Sales", "tabs" => [ "orders", "quotes" ] } ]`.
      A group is named by its declared label and a tab by its key as a string.
-     `ui_navigation` draws the named groups and tabs first in that order, then
+     The navigation draws the named groups and tabs first in that order, then
      the rest in declared order, and ignores names no longer declared.
    - A companion preferences gem may set this supplier for the app. Ask the
      developer whether the app uses one, or which code stores each user's table
@@ -316,16 +316,20 @@ built on ViewComponent; hook it in before building any screen with those helpers
      `group.tab key, label:, href:, permitted:` adds a tab in order. `href:` is
      an address or a callable that receives the view and returns one.
      `permitted:` is a callable that receives the view and returns whether the
-     current person may see the tab. The layout renders them with
-     `ui_navigation` around `yield`, setting the app's logo with
-     `navigation.with_logo` and its account and user menus with
-     `navigation.with_menus` inside the block, so the layout draws no other
-     top bar. Ask the developer which tabs and groups the app has, and which
-     permission check guards each, before declaring them.
+     current person may see the tab. A tab the person may not see is left
+     out, and a group with no tab left is left out. Ask the developer which
+     tabs and groups the app has, and which permission check guards each,
+     before declaring them. Boot stops with
+     `KeystoneUi::NavigationCheck::Error` when a tab has no label or no
+     `href:`, when two tabs share a key, or when a group has no tabs. Drawing
+     the declared groups in the layout is done with the navigation helper,
+     which belongs to `keystone_ui-develop`.
    - `current_tab_supplier` — a callable that receives the view and returns the
      key of the declared tab the current page belongs to, or `nil`.
-     `ui_navigation` shows that tab and its group as active in the top bar and
+     The navigation shows that tab and its group as active in the top bar and
      gives that tab and its group's label the `active` class in the sidebar.
+     The key must equal the declared key exactly, so a tab declared as
+     `:quotes` is not matched by the string `"quotes"`.
      `nil`, a key no declared tab has, or no supplier marks nothing. The
      callable must answer for every page the layout draws, so a page with no
      tab returns `nil` rather than raising. Ask the developer how a page names

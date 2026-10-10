@@ -7,6 +7,11 @@ module Ixport
 
     private
 
+    def find_import
+      @import = Import.find_by(id: params[:import_id], person: ixport_person, account: ixport_account)
+      head :not_found unless @import
+    end
+
     def ixport_person
       send(Ixport.configuration.current_person_method)
     end

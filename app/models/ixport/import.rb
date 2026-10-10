@@ -14,6 +14,10 @@ module Ixport
     validate :file_has_header_row, on: :create
     validate :file_within_inline_row_limit, on: :create
 
+    def importer_class
+      Ixport.registration(key).importer.constantize
+    end
+
     def headers
       CSV.parse_line(file.download) || []
     end
