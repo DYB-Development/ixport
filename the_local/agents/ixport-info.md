@@ -1,6 +1,6 @@
 ---
 name: ixport-info
-description: Use to learn what ixport offers — CSV import and export through a mounted Rails engine, the mapped imports and the fixed and chosen exports a host app registers, the importer and exporter classes behind them, uploading a file, matching its columns, previewing which rows will add, update or be refused, running the import, its result page, downloading an export as a CSV file, saving named templates of picked columns for a chosen export, and the vocabulary the install and develop locals assume.
+description: Use to learn what ixport offers — CSV import and export through a mounted Rails engine, the mapped imports and the fixed and chosen exports a host app registers, the importer and exporter classes behind them, uploading a file, matching its columns, previewing which rows will add, update or be refused, running the import, its result page, the list of a person's past imports, downloading an export as a CSV file, saving named templates of picked columns for a chosen export, and the vocabulary the install and develop locals assume.
 tools: Read
 scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes, where an export is either fixed or chosen, and a chosen export lets the account save named templates of picked columns
 ---
@@ -16,6 +16,8 @@ A person picks an import, uploads a CSV file, matches each column of the file to
 From the preview the person runs the import. The run saves every added and updated record in the host app, records each refused row with its reason, and sends the person to the import's result page, which shows how many rows were added and updated and lists each refused row. The run happens inside the request, an import runs once, and asking to run it again changes nothing. Opening the preview of a finished import sends the person to its result page instead, and opening the result page of an import that has not run sends the person to its preview.
 
 ixport refuses a file with no header row, and a file with more rows than the host's row limit, on the upload page.
+
+Below the list of imports, the same page lists the person's own past imports in the current account, newest first. Each shows the import's title, the uploaded file's name, its status, the date it was uploaded, and, once it has run, how many rows were added, updated and refused. Each title opens the import at the step it has reached: the mapping when no mapping is saved, the preview when it has a mapping and has not run, and the result page once it has run. Imports uploaded by other people, or by the same person in another account, are not listed.
 
 An export is either fixed or chosen. A fixed export's title on the exports page links to a CSV download holding every column the exporter declares. A chosen export's title is not a link. Under it the page lists the templates the account has saved for that export, each linking to a download and to its edit page, with a button to make a new template.
 
@@ -63,7 +65,10 @@ ixport declares nothing for this local to document. Its surface is split between
 - **Refused** — a row whose record, new or changed, fails the host model's own validations. Its reason is that model's error messages.
 - **Preview** — the page that shows the add, update and refused counts and lists the update and refused rows by row number. It builds each row's record in memory and saves none of them.
 - **Run** — the step that saves the added and updated records and stores each refused row's number and reason. A run that raises an error saves nothing, and an import that has finished is never run a second time.
+- **Status** — an import record is Pending until it has run and Finished after.
 - **Finished** — the state of an import record once it has run.
+- **Past imports** — the person's own import records in the current account, listed newest first under the imports on the engine's front page.
+- **Step** — how far an import record has got: mapping when no mapping is saved, preview once one is, and result once it has run.
 - **Result page** — the import's own page, showing the added and updated counts and each refused row as they were stored by the run, so it shows the same thing each time it is opened.
 - **Person** — whoever is signed in and running the import or downloading the export. ixport reaches them through a method the host names, so the host's user model needs no particular name.
 - **Account** — the optional owner the person is working inside, such as a team or company, reached the same way. An app with no accounts runs without one. Both the importer and the exporter are given the person and the account.

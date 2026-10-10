@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - `chosen: true` registers an export whose columns a person picks, saving the picks in order as a named template that every member of the account can download, edit and delete.
 - A template whose column the exporter no longer lists still downloads, without that column.
 - An update generator, `ixport:update`, copies the migrations added since an app installed ixport.
+- The engine's root lists the person's imports in the current account, newest first, each opening at the step it has reached.
 
 ## [0.1.0] - 2026-10-10
 

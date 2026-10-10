@@ -55,6 +55,7 @@ sources:
   - app/controllers/ixport/application_controller.rb
   - app/controllers/ixport/imports_controller.rb
   - app/views/ixport/imports/index.html.erb
+  - app/helpers/ixport/imports_helper.rb
   - app/models/ixport/application_record.rb
   - app/models/ixport/import.rb
   - app/controllers/ixport/mappings_controller.rb
