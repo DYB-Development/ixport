@@ -1,8 +1,9 @@
 <%= ui_form_page(title: "Match columns", back_url: root_path) %>
 <%= ui_page(max_width: :md) do %>
-  <% @import.headers.each do |header| %>
+  <% @import.headers.each_with_index do |header, index| %>
     <%= tag.div(data: { column: true }) do %>
       <%= tag.span(header, data: { column_name: true }) %>
+      <%= ui_select(name: "mapping[#{index}]", options: @fields.map { |field| [field.label, field.key] }, include_blank: "Skip") %>
     <% end %>
   <% end %>
 <% end %>
