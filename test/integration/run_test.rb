@@ -71,6 +71,12 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ { "added" => "1", "updated" => "1" }, [ [ "4", "Price cents is not a number" ] ] ], result_on_page
   end
 
+  test "the result page of an import that has not run leads to its preview" do
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_redirected_to "/data_imports/imports/#{@import.id}/preview"
+  end
+
   private
 
   def result_on_page
