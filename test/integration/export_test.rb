@@ -43,4 +43,10 @@ class ExportTest < ActionDispatch::IntegrationTest
 
     assert_equal "SKU,Price\nA1,100\nB2,200\n", response.body
   end
+
+  test "downloading an export under a key no export is registered under answers not found" do
+    get "/data_imports/exports/invoices"
+
+    assert_response :not_found
+  end
 end
