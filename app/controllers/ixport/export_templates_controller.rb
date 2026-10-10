@@ -3,20 +3,25 @@
 module Ixport
   class ExportTemplatesController < ApplicationController
     before_action :find_chosen_export, only: %i[new create]
-    before_action :find_template, only: :show
+    before_action :find_template, only: %i[show update]
 
     def new
       @columns = @registration.exporter.constantize.columns
     end
 
     def create
-      ExportTemplate.create!(key: @registration.key, name: params[:name], columns: picked_columns, person: ixport_person, account: ixport_account)
+      ExportTemplate.create!(key: @registration.key, name: params[:name], columns: known_columns(@registration), person: ixport_person, account: ixport_account)
       redirect_to exports_path
     end
 
     def show
       exporter = @template.registration.exporter.constantize.new(person: ixport_person, account: ixport_account)
       send_data CsvWriter.new(exporter, @template.picked_columns).to_csv, filename: "#{@template.name.parameterize}.csv", type: "text/csv"
+    end
+
+    def update
+      @template.update!(name: params[:name], columns: known_columns(@template.registration))
+      redirect_to exports_path
     end
 
     private
@@ -31,8 +36,8 @@ module Ixport
       head :not_found unless @registration&.chosen
     end
 
-    def picked_columns
-      Array(params[:columns]).compact_blank & @registration.exporter.constantize.columns.map { |column| column.key.to_s }
+    def known_columns(registration)
+      Array(params[:columns]).compact_blank & registration.exporter.constantize.columns.map { |column| column.key.to_s }
     end
   end
 end

@@ -88,4 +88,12 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "Prices" ], css_select("[data-export-template]").map { |template| template.text.strip }
   end
+
+  test "a person edits a template's name and columns" do
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "sku" ], person: @person, account: @account)
+
+    patch "/data_imports/export_templates/#{template.id}", params: { name: "Price list", columns: [ "sku", "price_cents" ] }
+
+    assert_equal [ "Price list", [ "sku", "price_cents" ] ], template.reload.then { |saved| [ saved.name, saved.columns ] }
+  end
 end
