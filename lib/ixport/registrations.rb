@@ -1,14 +1,20 @@
 # frozen_string_literal: true
 
 module Ixport
-  Registration = Struct.new(:key, :title, :importer, keyword_init: true)
-  ExportRegistration = Struct.new(:key, :title, :exporter, :chosen, keyword_init: true)
+  module AccessRule
+    def allows?(person, account)
+      allow.nil? || allow.call(person, account)
+    end
+  end
+
+  Registration = Struct.new(:key, :title, :importer, :allow, keyword_init: true) { include AccessRule }
+  ExportRegistration = Struct.new(:key, :title, :exporter, :chosen, :allow, keyword_init: true) { include AccessRule }
 
   class MissingImporter < StandardError; end
   class MissingExporter < StandardError; end
 
-  def self.register_import(key, title:, importer:)
-    registrations[key.to_sym] = Registration.new(key: key.to_sym, title: title, importer: importer.to_s)
+  def self.register_import(key, title:, importer:, allow: nil)
+    registrations[key.to_sym] = Registration.new(key: key.to_sym, title: title, importer: importer.to_s, allow: allow)
   end
 
   def self.registration(key)
@@ -32,8 +38,8 @@ module Ixport
     end
   end
 
-  def self.register_export(key, title:, exporter:, chosen: false)
-    export_registrations[key.to_sym] = ExportRegistration.new(key: key.to_sym, title: title, exporter: exporter.to_s, chosen: chosen)
+  def self.register_export(key, title:, exporter:, chosen: false, allow: nil)
+    export_registrations[key.to_sym] = ExportRegistration.new(key: key.to_sym, title: title, exporter: exporter.to_s, chosen: chosen, allow: allow)
   end
 
   def self.export_registration(key)

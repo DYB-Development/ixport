@@ -40,4 +40,12 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
 
     assert Ixport.export_registration(:products).chosen
   end
+
+  test "a registration's rule receives the person and the account and allows or refuses them" do
+    Ixport.register_import(:products, title: "Products", importer: "ProductImporter", allow: ->(person, account) { person == "admin" && account == "North" })
+
+    registration = Ixport.registration(:products)
+
+    assert_equal [ true, false, false ], [ registration.allows?("admin", "North"), registration.allows?("rep", "North"), registration.allows?("admin", "South") ]
+  end
 end
