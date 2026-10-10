@@ -64,6 +64,14 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ 1, 1 ], [ @account.products.count, import.refusals.count ]
   end
 
+  test "an import whose run raises is marked failed with the error's message and the rows saved before it stopped" do
+    import = import_of("SKU,Price\nB2,200\nRAISE,300\nD4,400\n")
+
+    import.run!
+
+    assert_equal [ "failed", "Disk full", 1, [ "B2" ] ], [ import.reload.status, import.error_message, import.added_count, @account.products.pluck(:sku) ]
+  end
+
   private
 
   def import_of(csv)

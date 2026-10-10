@@ -16,7 +16,7 @@ module Ixport
 
     def run!(reporter: NullReporter.new)
       with_lock do
-        walk_and_save(reporter) unless finished?
+        walk_and_save(reporter) if status.in?(%w[pending running])
       end
     end
 
@@ -65,18 +65,27 @@ module Ixport
     private
 
     def walk_and_save(reporter)
+      counts = { add: 0, update: 0 }
       rows = self.rows
       reporter.set_total(rows.size)
       rows.each do |row|
-        if row.outcome == :refused
-          refusals.create!(row_number: row.number, reason: row.reason)
-          reporter.refuse(label: "Row #{row.number}", reason: row.reason)
-        else
-          row.record.save!
-        end
+        save_row(row, reporter)
+        counts[row.outcome] += 1 if counts.key?(row.outcome)
         reporter.advance
       end
-      update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
+      update!(status: "finished", added_count: counts[:add], updated_count: counts[:update])
+    rescue StandardError => error
+      Rails.error.report(error)
+      update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
+    end
+
+    def save_row(row, reporter)
+      if row.outcome == :refused
+        refusals.create!(row_number: row.number, reason: row.reason)
+        reporter.refuse(label: "Row #{row.number}", reason: row.reason)
+      else
+        self.class.transaction(requires_new: true) { row.record.save! }
+      end
     end
 
     def incoming_file_is_usable
