@@ -26,7 +26,22 @@ class PastImportsTest < ActionDispatch::IntegrationTest
     assert_equal [ "march.csv", "january.csv" ], css_select("[data-past-import] [data-file-name]").map { |name| name.text.strip }
   end
 
+  test "an entry shows the title, file name, status, when it was made, and its counts once it has run" do
+    import = import_named("march.csv", created_at: Time.zone.local(2026, 3, 4, 9), status: "finished", added_count: 2, updated_count: 1)
+    import.refusals.create!(row_number: 4, reason: "Price cents is not a number")
+
+    get "/data_imports"
+
+    assert_equal({ "import-title" => "Products", "file-name" => "march.csv", "status" => "Finished", "made-on" => "Mar 4, 2026", "added" => "2", "updated" => "1", "refused" => "1" }, entry_fields)
+  end
+
   private
+
+  def entry_fields
+    fields = %w[import-title file-name status made-on added updated refused]
+    entry = css_select("[data-past-import]").first
+    fields.filter_map { |field| [ field, entry.at_css("[data-#{field}]").text.strip ] if entry.at_css("[data-#{field}]") }.to_h
+  end
 
   def import_named(filename, person: @person, account: @account, **attributes)
     Ixport::Import.create!(key: "products", person: person, account: account, file: { io: StringIO.new("SKU\nA1\n"), filename: filename }, **attributes)

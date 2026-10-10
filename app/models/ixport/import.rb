@@ -25,6 +25,10 @@ module Ixport
       status == "finished"
     end
 
+    def title
+      Ixport.registration(key).title
+    end
+
     def importer_class
       Ixport.registration(key).importer.constantize
     end
