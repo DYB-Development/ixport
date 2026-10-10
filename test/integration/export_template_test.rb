@@ -38,4 +38,12 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "price_cents" ], Ixport::ExportTemplate.last.columns
   end
+
+  test "a template cannot be saved for a fixed export" do
+    Ixport.register_export(:accounts, title: "Accounts", exporter: "ExportTemplateTest::ProductExporter")
+
+    post "/data_imports/exports/accounts/templates", params: { name: "Names", columns: [ "sku" ] }
+
+    assert_response :not_found
+  end
 end
