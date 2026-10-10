@@ -50,7 +50,15 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "t.integer :updated_count, null: false, default: 0"
   end
 
+  test "copies a migration that creates the table of rows an import refused" do
+    assert_includes refusals_migration, "create_table :ixport_import_refusals"
+  end
+
   private
+
+  def refusals_migration
+    File.read(Dir.glob("#{destination}/db/migrate/*_create_ixport_import_refusals.rb").first.to_s)
+  end
 
   def migration
     File.read(Dir.glob("#{destination}/db/migrate/*_create_ixport_imports.rb").first.to_s)
