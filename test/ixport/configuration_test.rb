@@ -34,4 +34,8 @@ class Ixport::ConfigurationTest < ActiveSupport::TestCase
     assert_equal [ :require_staff!, :current_member, :current_team, "back_office" ],
                  Ixport.configuration.then { |c| [ c.authentication_method, c.current_person_method, c.current_account_method, c.layout ] }
   end
+
+  test "runs an import of up to a thousand rows inline unless the host sets another limit" do
+    assert_equal 1_000, Ixport.configuration.inline_row_limit
+  end
 end
