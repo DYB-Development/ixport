@@ -59,7 +59,7 @@ An app whose registered importer class does not exist fails to boot, with a mess
 
 The engine's root page lists every registered import by its title, each linking to its upload page.
 
-An importer lists the fields a person maps the file's columns to, each with the label the person sees. It names the one field rows are matched on, and the records a row may match, which it reaches through the `person` and `account` the import is for:
+An importer lists the fields a person maps the file's columns to, each with the label the person sees. It names the field or fields rows are matched on, and the records a row may match, which it reaches through the `person` and `account` the import is for:
 
 ```ruby
 class ProductImporter < Ixport::Importer
@@ -73,7 +73,9 @@ class ProductImporter < Ixport::Importer
 end
 ```
 
-Each field's key is the record's attribute name. ixport looks up every match value in the file with one query against `records`. A row whose match value matches one of those records updates it, and a row that matches nothing adds a new record built from `records`. A row whose match value is blank, or whose file has no column mapped to the match field, always adds a record.
+Each field's key is the record's attribute name. ixport looks up every match value in the file with one query against `records`. A row whose match values equal one of those records on every match field updates it, and a row that matches nothing adds a new record built from `records`. Values are compared as the record's own types, so `12.50` in a file matches `12.5` stored on a record. A row with a blank value in any match field, or whose file has no column mapped to one, always adds a record.
+
+To match on several fields, name them all, for example `match_on :happened_on, :amount, :name`.
 
 ## Uploading and mapping a file
 
