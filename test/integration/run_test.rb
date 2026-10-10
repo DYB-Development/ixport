@@ -13,6 +13,14 @@ class RunTest < ActionDispatch::IntegrationTest
     end
   end
 
+  class RecordingRunner
+    cattr_accessor :enqueued, default: []
+
+    def self.enqueue(import)
+      enqueued << import
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -92,6 +100,15 @@ class RunTest < ActionDispatch::IntegrationTest
     post "/data_imports/imports/#{@import.id}/run"
 
     assert_equal [ 0, "finished" ], [ Wallflower::Task.count, @import.reload.status ]
+  end
+
+  test "a host's own runner configured in place of wallflower is handed every mapped import" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_equal [ @import ], RecordingRunner.enqueued
   end
 
   private
