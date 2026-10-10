@@ -4,7 +4,7 @@ CSV import and export for Rails apps. An app registers the kinds of CSV a person
 
 ## Installation
 
-Add the gem and run its install generator, which copies the migrations for its imports table and the table of rows an import refused:
+Add the gem and run its install generator, which copies the migrations for its tables:
 
 ```ruby
 gem "ixport"
@@ -13,6 +13,13 @@ gem "ixport"
 ```bash
 bundle install
 bin/rails generate ixport:install
+bin/rails db:migrate
+```
+
+After updating the gem, run its update generator to copy any migrations added since it was installed, then migrate:
+
+```bash
+bin/rails generate ixport:update
 bin/rails db:migrate
 ```
 
@@ -105,6 +112,16 @@ end
 ```
 
 The engine's exports page, at `exports` under the mount path, lists every registered export by its title, each linking to its download. The download's header row is the exporter's column labels in order, followed by one row per record.
+
+## Chosen exports and templates
+
+An export registered with `chosen: true` lets a person pick its columns instead of taking all of them. It uses the same kind of exporter:
+
+```ruby
+Ixport.register_export :products, title: "Products", exporter: "ProductExporter", chosen: true
+```
+
+On the exports page, a chosen export lists its saved templates and offers New template. A template has a name and the exporter's columns picked in order, and downloading it gives a CSV of only those columns. Every member of an account sees, downloads, edits and deletes the account's templates, and another account's templates answer not found. A template whose column the exporter no longer lists still downloads, without that column.
 
 ## Claude Code agents
 
