@@ -20,4 +20,10 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
 
     assert_includes error.message, "MissingProductImporter"
   end
+
+  test "a host registers a fixed export by its key, its title and the name of its exporter class" do
+    Ixport.register_export(:products, title: "Products", exporter: "ProductExporter")
+
+    assert_equal [ "Products", "ProductExporter" ], [ Ixport.export_registration(:products).title, Ixport.export_registration(:products).exporter ]
+  end
 end
