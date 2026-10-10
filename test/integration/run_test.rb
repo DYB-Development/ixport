@@ -43,6 +43,14 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ { "added" => "1", "updated" => "1" }, [ [ "4", "Price cents is not a number" ] ] ], result_on_page
   end
 
+  test "a finished import offers no Run button" do
+    post "/data_imports/imports/#{@import.id}/run"
+
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_select "form[action='/data_imports/imports/#{@import.id}/run']", count: 0
+  end
+
   private
 
   def result_on_page
