@@ -54,6 +54,16 @@ class PastImportsTest < ActionDispatch::IntegrationTest
                  css_select("[data-past-import] a[data-step-link]").map { |link| link["href"] }
   end
 
+  test "imports made by other people, or in another account, are not listed" do
+    import_named("mine.csv")
+    import_named("teammate.csv", person: User.create!(name: "Teammate"))
+    import_named("south.csv", account: Account.create!(name: "South"))
+
+    get "/data_imports"
+
+    assert_equal [ "mine.csv" ], css_select("[data-past-import] [data-file-name]").map { |name| name.text.strip }
+  end
+
   private
 
   def entry_fields
