@@ -12,6 +12,14 @@ module Ixport
       @fields ||= []
     end
 
+    def self.match_on(key)
+      @match_field = key.to_sym
+    end
+
+    def self.match_field
+      @match_field
+    end
+
     def new_row?(row)
       find_existing(row).nil?
     end
