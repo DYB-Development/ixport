@@ -39,14 +39,18 @@ module Ixport
     end
 
     def match_key(values)
-      key = match_fields.map { |field| values[field] }
-      key.map(&:to_s) unless key.any?(&:blank?)
+      key = match_fields.map { |field| cast(field, values[field]) }
+      key unless key.any?(&:blank?)
+    end
+
+    def cast(field, value)
+      @importer.records.klass.type_for_attribute(field.to_s).cast(value)
     end
 
     def existing_records
       @existing_records ||= begin
-        candidates = match_fields.to_h { |field| [ field, data_rows.map { |cells| values_of(cells)[field] }.compact_blank ] }
-        @importer.records.where(candidates).index_by { |record| match_fields.map { |field| record.public_send(field).to_s } }
+        candidates = match_fields.to_h { |field| [ field, data_rows.map { |cells| cast(field, values_of(cells)[field]) }.compact_blank ] }
+        @importer.records.where(candidates).index_by { |record| match_fields.map { |field| record.public_send(field) } }
       end
     end
   end
