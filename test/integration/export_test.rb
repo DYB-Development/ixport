@@ -3,6 +3,15 @@
 require "test_helper"
 
 class ExportTest < ActionDispatch::IntegrationTest
+  class ProductExporter < Ixport::Exporter
+    column :sku, label: "SKU"
+    column :price_cents, label: "Price"
+
+    def records
+      account.products.order(:sku)
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -23,5 +32,15 @@ class ExportTest < ActionDispatch::IntegrationTest
     get "/data_imports/exports"
 
     assert_equal [ "Products", "Customers" ], css_select("[data-export]").map { |entry| entry.text.strip }
+  end
+
+  test "downloading a fixed export gives a CSV of the exporter's column labels and one row per record" do
+    Ixport.register_export(:products, title: "Products", exporter: "ExportTest::ProductExporter")
+    @account.products.create!(sku: "A1", price_cents: 100)
+    @account.products.create!(sku: "B2", price_cents: 200)
+
+    get "/data_imports/exports/products"
+
+    assert_equal "SKU,Price\nA1,100\nB2,200\n", response.body
   end
 end
