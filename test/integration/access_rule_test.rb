@@ -59,4 +59,15 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
 
     assert_equal [ 404, 404, 404 ], responses
   end
+
+  test "a person the rule refuses does not see their past imports of that kind" do
+    Ixport.register_import(:customers, title: "Customers", importer: "AccessRuleTest::ProductImporter")
+    [ "products", "customers" ].each do |key|
+      Ixport::Import.create!(key: key, person: @person, account: @account, file: { io: StringIO.new("SKU\nA1\n"), filename: "#{key}.csv" })
+    end
+
+    get "/data_imports"
+
+    assert_equal [ "customers.csv" ], css_select("[data-past-import] [data-file-name]").map { |name| name.text.strip }
+  end
 end

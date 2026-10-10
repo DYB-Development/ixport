@@ -7,7 +7,7 @@ module Ixport
 
     def index
       @registrations = Ixport.registrations.values.select { |registration| allowed?(registration) }
-      @imports = Import.where(person: ixport_person, account: ixport_account).order(created_at: :desc).with_attached_file.includes(:refusals)
+      @imports = Import.where(person: ixport_person, account: ixport_account, key: @registrations.map { |registration| registration.key.to_s }).order(created_at: :desc).with_attached_file.includes(:refusals)
     end
 
     def new
