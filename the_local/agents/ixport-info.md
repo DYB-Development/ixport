@@ -34,7 +34,7 @@ Every export file's first row holds the column labels, and each later row holds 
 
 By default every signed-in person can use every import and export. The host can give any import or export an access rule, which is handed the signed-in person and the current account and allows or refuses them, and which can ask the app's own permission checks, such as a Pundit policy. A person the rule refuses does not see that import or export listed, does not see their past imports of it, and is answered not found on every one of its pages and downloads, including its upload page, an existing import's mapping, preview, run and result pages, and a chosen export's template pages and downloads. The rule is checked again on every request, so a person whose permissions change is let in or kept out from their next page.
 
-The engine owns the screens, the access check, and its own tables of import records, refused rows and export templates, with the uploaded file stored through Active Storage. The host owns what each import and export means: which columns it reads or writes, which column identifies an existing record, and which of the app's records a row is checked against, saved into, or read from. Reach for ixport when a Rails app needs people to load data from spreadsheets or take it out into one, rather than writing a one-off upload or download page per record type.
+The engine owns the screens, the access check, and its own tables of import records, refused rows and export templates, with the uploaded file stored through Active Storage. The host owns what each import and export means: which columns it reads or writes, which column or columns identify an existing record, and which of the app's records a row is checked against, saved into, or read from. Reach for ixport when a Rails app needs people to load data from spreadsheets or take it out into one, rather than writing a one-off upload or download page per record type.
 
 The engine renders its pages with Keystone UI inside a layout the host chooses, and it runs its access check through a method the host already has. Its pages inherit from a controller the host names, which is the host's own application controller unless the host names another, so the filters, helpers and error handling the host puts on that controller apply to ixport's pages as well.
 
@@ -59,11 +59,12 @@ ixport declares nothing for this local to document. Its surface is split between
 - **Picked columns** — the columns a template holds, in the order they were chosen. A slot left on None is dropped, a column picked twice is kept once, and a column the exporter no longer declares is left out of the download.
 - **Key** — the short name an import or export is registered and looked up by, held as a symbol. A fixed export's file is named after its key.
 - **Title** — the words a person sees for the import or export on the engine's pages.
-- **Importer** — a class the host app writes that declares the columns the import reads, each with a key and a label, names the column that identifies an existing record, and supplies the set of the app's records the rows are checked against and saved into.
+- **Importer** — a class the host app writes that declares the columns the import reads, each with a key and a label, names the column or columns that together identify an existing record, and supplies the set of the app's records the rows are checked against and saved into.
 - **Exporter** — a class the host app writes that declares the columns the export writes, each with a key and a label, and supplies the set of the app's records the file holds.
 - **Export column** — one column of an export's file, headed by its label and filled from the attribute its key names on each record.
 - **Through** — an export column can be read from a record related to each row's record rather than from the record itself, and it is left blank when that related record is missing.
-- **Match column** — the one declared import column whose value decides whether a row is an existing record or a new one.
+- **Match column** — a declared import column whose value decides whether a row is an existing record or a new one. An import can have one or several, and a row is an existing record only when it equals that record on every one of them.
+- **Matched value** — a row's value in a match column, compared as the record's own type rather than as text, so 100.0 in a file matches 100 stored on a record.
 - **Import record** — one upload by one person, stored by the engine with the key of its mapped import, the uploaded file, the mapping once it is saved, and the added and updated counts once it has run.
 - **Headers** — the first row of the uploaded file, read as the names of its columns.
 - **Mapping** — which of the importer's columns each header in the file fills, stored by the header's position in the row. A header left on "Skip" is not stored.
@@ -71,8 +72,8 @@ ixport declares nothing for this local to document. Its surface is split between
 - **Background runner** — what runs an import outside the request: none, wallflower, or a class the host app writes. Having wallflower in the app does not choose it, the host has to.
 - **Wallflower** — a separate gem that runs long tasks in the background and gives each task a page showing its progress. ixport registers its imports with it as a kind of task titled Import.
 - **Row number** — a row's line in the file, counting the header as row 1, so the first data row is row 2.
-- **Add** — a row whose match column value is found in no existing record, so it creates one.
-- **Update** — a row whose match column value is found in an existing record, so it changes that record.
+- **Add** — a row that no existing record equals on every match column, or that is blank in any match column, or comes from a file with no column mapped to one, so it creates a record.
+- **Update** — a row that equals an existing record on every match column, so it changes that record.
 - **Refused** — a row whose record, new or changed, fails the host model's own validations. Its reason is that model's error messages.
 - **Preview** — the page that shows the add, update and refused counts and lists the update and refused rows by row number. It builds each row's record in memory and saves none of them.
 - **Run** — the step that saves the added and updated records one row at a time and stores each refused row's number and reason. A run that raises an error stops there and keeps the rows it already saved, and an import that has finished or failed is never run a second time.

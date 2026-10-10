@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - `config.base_controller` names the controller ixport's pages inherit, so they run that controller's checks.
+- `match_on` takes several fields, matching a row only when it equals a record on all of them, with values compared as the record's own types.
 
 ## [0.2.0] - 2026-10-10
 
