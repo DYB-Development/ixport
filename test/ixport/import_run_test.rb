@@ -32,6 +32,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal 150, product.reload.price_cents
   end
 
+  test "a row whose update fails validation is refused with its row number and reason, and its record is left unchanged" do
+    product = @account.products.create!(sku: "A1", price_cents: 100)
+
+    import = import_of("SKU,Price\nA1,lots\n")
+    import.run!(importer)
+
+    assert_equal [ 100, [ [ 2, "Price cents is not a number" ] ] ], [ product.reload.price_cents, import.refusals.pluck(:row_number, :reason) ]
+  end
+
   private
 
   def importer

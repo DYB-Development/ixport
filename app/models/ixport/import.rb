@@ -10,12 +10,19 @@ module Ixport
     belongs_to :account, polymorphic: true, optional: true
 
     has_one_attached :file
+    has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
     validate :file_has_header_row, on: :create
     validate :file_within_inline_row_limit, on: :create
 
     def run!(importer)
-      RowWalk.new(self, importer).rows.each { |row| row.record.save! unless row.outcome == :refused }
+      RowWalk.new(self, importer).rows.each do |row|
+        if row.outcome == :refused
+          refusals.create!(row_number: row.number, reason: row.reason)
+        else
+          row.record.save!
+        end
+      end
     end
 
     def importer_class
