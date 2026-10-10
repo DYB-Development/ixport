@@ -38,6 +38,14 @@ class Ixport::RowWalkTest < ActiveSupport::TestCase
     assert_equal [ [ :refused, "Price cents is not a number" ] ], walk.rows.map { |row| [ row.outcome, row.reason ] }
   end
 
+  test "with no column mapped to the match field, every row that passes will add a record" do
+    @account.products.create!(sku: "", price_cents: 100)
+
+    walk = walk_of("SKU,Price\nA1,250\n", { "1" => "price_cents" })
+
+    assert_equal [ :add ], walk.rows.map(&:outcome)
+  end
+
   private
 
   def walk_of(csv, mapping)
