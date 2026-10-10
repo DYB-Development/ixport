@@ -27,7 +27,7 @@ module Ixport
     end
 
     def data_rows
-      @data_rows ||= CSV.parse(@import.file.download).drop(1)
+      @data_rows ||= CSV.parse(@import.contents).drop(1)
     end
 
     def values_of(cells)

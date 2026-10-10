@@ -51,7 +51,15 @@ module Ixport
     end
 
     def headers
-      CSV.parse_line(file.download) || []
+      CSV.parse_line(contents) || []
+    end
+
+    def contents
+      self.class.readable(file.download)
+    end
+
+    def self.readable(text)
+      text.to_s.dup.force_encoding(Encoding::UTF_8).delete_prefix("\uFEFF")
     end
 
     private
@@ -90,7 +98,7 @@ module Ixport
       io = attachable.is_a?(Hash) ? attachable[:io] : attachable
       return "" unless io
 
-      io.read.tap { io.rewind }.to_s
+      self.class.readable(io.read.tap { io.rewind })
     end
   end
 end
