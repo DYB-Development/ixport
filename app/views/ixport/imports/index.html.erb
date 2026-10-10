@@ -7,4 +7,13 @@
       <div data-import><%= link_to registration.title, new_import_path(key: registration.key) %></div>
     <% end %>
   <% end %>
+  <% if @imports.any? %>
+    <%= ui_section(title: "Your imports") do %>
+      <% @imports.each do |import| %>
+        <div data-past-import>
+          <span data-file-name><%= import.file.filename.to_s %></span>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
 <% end %>
