@@ -19,6 +19,12 @@ class UploadTest < ActionDispatch::IntegrationTest
     Ixport.reset_registrations!
   end
 
+  test "the upload page for a registered import asks for a CSV file" do
+    get "/data_imports/imports/new", params: { key: "products" }
+
+    assert_select "form[action='/data_imports/imports'] input[type=file][name=file]"
+  end
+
   test "a person uploads a CSV for a registered mapped import" do
     post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("products.csv", "text/csv") }
 

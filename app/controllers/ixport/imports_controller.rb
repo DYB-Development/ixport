@@ -6,6 +6,10 @@ module Ixport
       @registrations = Ixport.registrations.values
     end
 
+    def new
+      @registration = Ixport.registration(params[:key])
+    end
+
     def create
       Import.create!(key: params[:key], person: ixport_person, account: ixport_account, file: params[:file])
       head :created
