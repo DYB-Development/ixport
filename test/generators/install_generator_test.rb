@@ -34,6 +34,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "t.string :key, null: false"
   end
 
+  test "the migration stores which field each of the file's columns maps to" do
+    assert_includes migration, "t.json :mapping"
+  end
+
   private
 
   def migration

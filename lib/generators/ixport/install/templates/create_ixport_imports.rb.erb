@@ -4,6 +4,7 @@ class CreateIxportImports < ActiveRecord::Migration[<%= ActiveRecord::Migration.
       t.string :key, null: false
       t.references :person, polymorphic: true, null: false
       t.references :account, polymorphic: true, null: true
+      t.json :mapping
       t.timestamps
     end
   end

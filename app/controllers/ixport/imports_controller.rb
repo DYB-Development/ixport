@@ -2,8 +2,30 @@
 
 module Ixport
   class ImportsController < ApplicationController
+    before_action :find_registration, only: %i[new create]
+
     def index
       @registrations = Ixport.registrations.values
+    end
+
+    def new
+    end
+
+    def create
+      import = Import.new(key: @registration.key, person: ixport_person, account: ixport_account, file: params[:file])
+      if import.save
+        redirect_to import_mapping_path(import)
+      else
+        @error = import.errors[:file].first
+        render :new, status: :unprocessable_entity
+      end
+    end
+
+    private
+
+    def find_registration
+      @registration = Ixport.registrations[params[:key].to_s.to_sym]
+      head :not_found unless @registration
     end
   end
 end

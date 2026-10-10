@@ -4,7 +4,7 @@
     <%= ui_alert(message: "No imports are set up yet.") %>
   <% else %>
     <% @registrations.each do |registration| %>
-      <div data-import><%= registration.title %></div>
+      <div data-import><%= link_to registration.title, new_import_path(key: registration.key) %></div>
     <% end %>
   <% end %>
 <% end %>
