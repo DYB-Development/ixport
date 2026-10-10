@@ -49,4 +49,12 @@ class MappingTest < ActionDispatch::IntegrationTest
 
     assert_select "form[action='/data_imports/imports/#{@import.id}/mapping'] button[type=submit]", text: "Save mapping"
   end
+
+  test "another person gets not found for this import" do
+    ApplicationController.signed_in_user = User.create!(name: "Other rep")
+
+    get "/data_imports/imports/#{@import.id}/mapping"
+
+    assert_response :not_found
+  end
 end
