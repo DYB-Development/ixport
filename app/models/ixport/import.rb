@@ -16,13 +16,15 @@ module Ixport
     validate :file_within_inline_row_limit, on: :create
 
     def run!(importer)
-      RowWalk.new(self, importer).rows.each do |row|
+      rows = RowWalk.new(self, importer).rows
+      rows.each do |row|
         if row.outcome == :refused
           refusals.create!(row_number: row.number, reason: row.reason)
         else
           row.record.save!
         end
       end
+      update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
     end
 
     def importer_class

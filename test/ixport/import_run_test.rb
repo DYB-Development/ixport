@@ -41,6 +41,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ 100, [ [ 2, "Price cents is not a number" ] ] ], [ product.reload.price_cents, import.refusals.pluck(:row_number, :reason) ]
   end
 
+  test "a finished run records how many rows it added and updated" do
+    @account.products.create!(sku: "A1", price_cents: 100)
+
+    import = import_of("SKU,Price\nA1,150\nB2,200\nC3,300\n")
+    import.run!(importer)
+
+    assert_equal [ "finished", 2, 1 ], import.reload.values_at(:status, :added_count, :updated_count)
+  end
+
   private
 
   def importer
