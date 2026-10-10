@@ -2,10 +2,11 @@
 
 module Ixport
   class Configuration
-    attr_accessor :authentication_method
+    attr_accessor :authentication_method, :current_person_method
 
     def initialize
       @authentication_method = :authenticate_user!
+      @current_person_method = :current_user
     end
   end
 
