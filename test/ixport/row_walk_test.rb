@@ -64,6 +64,14 @@ class Ixport::RowWalkTest < ActiveSupport::TestCase
     assert_equal [ [ :update, product ] ], walk.rows.map { |row| [ row.outcome, row.record ] }
   end
 
+  test "a row that differs from every record on one of the matched fields adds a record" do
+    @account.products.create!(sku: "A1", price_cents: 100)
+
+    walk = walk_of("SKU,Price\nA1,200\n", { "0" => "sku", "1" => "price_cents" }, ProductBySkuAndPriceImporter)
+
+    assert_equal [ :add ], walk.rows.map(&:outcome)
+  end
+
   private
 
   def walk_of(csv, mapping, importer_class = ProductImporter)
