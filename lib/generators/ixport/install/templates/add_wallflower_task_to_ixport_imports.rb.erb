@@ -1,0 +1,6 @@
+class AddWallflowerTaskToIxportImports < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    add_column :ixport_imports, :wallflower_task_id, :bigint
+    add_index :ixport_imports, :wallflower_task_id
+  end
+end

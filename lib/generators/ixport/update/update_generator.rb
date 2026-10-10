@@ -15,6 +15,10 @@ module Ixport
       def copy_export_templates_migration
         migration_template "create_ixport_export_templates.rb.erb", "db/migrate/create_ixport_export_templates.rb"
       end
+
+      def copy_wallflower_task_migration
+        migration_template "add_wallflower_task_to_ixport_imports.rb.erb", "db/migrate/add_wallflower_task_to_ixport_imports.rb"
+      end
     end
   end
 end

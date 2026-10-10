@@ -25,6 +25,12 @@ class Ixport::Generators::UpdateGeneratorTest < ActiveSupport::TestCase
     assert_equal 1, migrations_named("create_ixport_export_templates").size
   end
 
+  test "adds the link to the wallflower task to an app that installed earlier" do
+    update
+
+    assert_equal 1, migrations_named("add_wallflower_task_to_ixport_imports").size
+  end
+
   private
 
   def update

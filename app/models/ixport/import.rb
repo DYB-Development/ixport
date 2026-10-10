@@ -13,16 +13,20 @@ module Ixport
     has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
     validate :file_has_header_row, on: :create
-    validate :file_within_inline_row_limit, on: :create
+    validate :file_within_inline_row_limit, on: :create, unless: -> { Ixport.configuration.background_runner }
 
-    def run!(importer)
+    def run!(importer, reporter: NullReporter.new)
       with_lock do
-        walk_and_save(importer) unless finished?
+        walk_and_save(importer, reporter) unless finished?
       end
     end
 
     def finished?
       status == "finished"
+    end
+
+    def running?
+      status == "running"
     end
 
     def step
@@ -45,14 +49,17 @@ module Ixport
 
     private
 
-    def walk_and_save(importer)
+    def walk_and_save(importer, reporter)
       rows = RowWalk.new(self, importer).rows
+      reporter.set_total(rows.size)
       rows.each do |row|
         if row.outcome == :refused
           refusals.create!(row_number: row.number, reason: row.reason)
+          reporter.refuse(label: "Row #{row.number}", reason: row.reason)
         else
           row.record.save!
         end
+        reporter.advance
       end
       update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
     end

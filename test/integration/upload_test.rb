@@ -63,4 +63,15 @@ class UploadTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "with a background runner configured, a file over the inline row limit is accepted" do
+    Ixport.configure do |config|
+      config.inline_row_limit = 2
+      config.background_runner = :wallflower
+    end
+
+    post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("three_rows.csv", "text/csv") }
+
+    assert_redirected_to "/data_imports/imports/#{Ixport::Import.last.id}/mapping"
+  end
 end

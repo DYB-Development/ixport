@@ -11,6 +11,7 @@ install:
   - config.current_account_method
   - config.layout
   - config.inline_row_limit
+  - config.background_runner
 
 develop:
   - Ixport.register_import
@@ -22,6 +23,8 @@ develop:
   - account
   - Ixport::MissingImporter
   - Ixport::MissingExporter
+  - Ixport.run_import
+  - enqueue
   - GET /
   - GET /imports/new
   - POST /imports
@@ -78,3 +81,8 @@ sources:
   - app/controllers/ixport/export_templates_controller.rb
   - app/views/ixport/export_templates/new.html.erb
   - app/views/ixport/export_templates/edit.html.erb
+  - lib/ixport/background_runner.rb
+  - app/models/ixport/wallflower_runner.rb
+  - app/models/ixport/wallflower_task_runner.rb
+  - app/models/ixport/null_reporter.rb
+  - lib/generators/ixport/install/templates/add_wallflower_task_to_ixport_imports.rb.erb

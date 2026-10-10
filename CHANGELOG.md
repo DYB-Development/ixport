@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - A template whose column the exporter no longer lists still downloads, without that column.
 - An update generator, `ixport:update`, copies the migrations added since an app installed ixport.
 - The engine's root lists the person's imports in the current account, newest first, each opening at the step it has reached.
+- `config.background_runner` runs every import through wallflower or the app's own runner, with no inline row limit. A wallflower task shows the import's progress, changes and refusals and links to its result page. An app's own runner is handed each import with `enqueue` and runs it with `Ixport.run_import`. `ixport:update` copies the migration linking an import to its wallflower task.
 
 ## [0.1.0] - 2026-10-10
 

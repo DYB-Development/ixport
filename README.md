@@ -40,6 +40,7 @@ Ixport.configure do |config|
   config.current_account_method = :current_account   # returns the account an import belongs to
   config.layout = "application"                      # the layout ixport's pages are drawn in
   config.inline_row_limit = 1_000                    # the most rows an import may have when it runs inside the request
+  config.background_runner = nil                     # :wallflower, or the name of the app's own runner class
 end
 ```
 
@@ -73,7 +74,7 @@ Each field's key is the record's attribute name. ixport looks up every match val
 
 ## Uploading and mapping a file
 
-From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file has no header row or has more rows than `config.inline_row_limit`.
+From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file has no header row, or, in an app with no background runner, has more rows than `config.inline_row_limit`.
 
 After uploading, the person matches each column of the file's header row to one of the importer's fields, by its label, or skips it. Saving the mapping moves them on to the preview.
 
@@ -81,13 +82,35 @@ The preview shows how many rows will add a record, update one or be refused, bef
 
 ## Running an import
 
-The person runs the import from the preview, and it runs inside the request. Each row that passes the record's validations is saved, updating the record it matches or adding a new one. Each row that fails them is refused and kept with its row number and reason, and the record it matched is left unchanged.
+The person runs the import from the preview. With no background runner configured, it runs inside the request. Each row that passes the record's validations is saved, updating the record it matches or adding a new one. Each row that fails them is refused and kept with its row number and reason, and the record it matched is left unchanged.
 
 The import's result page then shows how many rows were added and how many updated, and lists each refused row. It shows the same thing on every later visit. A finished import offers no Run button, its preview leads to its result page, and running it again adds or changes nothing.
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
 
 The engine's root page also lists the person's imports in the current account, newest first. Each shows its title, file name, status and date, and its added, updated and refused counts once it has run. Each opens the page for the step the import has reached: its mapping, its preview, or its result.
+
+## Running imports in the background
+
+With `config.background_runner` set, every import runs through the runner, whatever its size, and the inline row limit does not apply. Having wallflower loaded does not set it.
+
+Set it to `:wallflower` to run imports as wallflower tasks. Running an import then starts a task and takes the person to the task page, which shows its progress, the rows it changed and refused, and a link to the import's result page when it finishes. The host must mount wallflower under its own name. Run `bin/rails generate ixport:update` after updating, for the migration that links an import to its task.
+
+Set it to the name of the app's own runner class to run imports another way. ixport hands each import to the class's `enqueue`, and the runner later runs it with `Ixport.run_import`. Until then the import's page shows it as running:
+
+```ruby
+class ImportRunner
+  def self.enqueue(import)
+    RunImportJob.perform_later(import.id)
+  end
+end
+
+class RunImportJob < ApplicationJob
+  def perform(import_id)
+    Ixport.run_import(Ixport::Import.find(import_id))
+  end
+end
+```
 
 ## Fixed exports
 
