@@ -37,4 +37,10 @@ class MappingTest < ActionDispatch::IntegrationTest
 
     assert_equal({ "0" => "sku" }, @import.reload.mapping)
   end
+
+  test "after saving the mapping, the person moves on to the preview" do
+    patch "/data_imports/imports/#{@import.id}/mapping", params: { mapping: { "0" => "sku" } }
+
+    assert_redirected_to "/data_imports/imports/#{@import.id}/preview"
+  end
 end

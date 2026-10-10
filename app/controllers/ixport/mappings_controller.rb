@@ -10,7 +10,7 @@ module Ixport
     def update
       import = Import.find(params[:import_id])
       import.update!(mapping: params.require(:mapping).permit(*import.headers.each_index.map(&:to_s)).to_h.compact_blank)
-      head :no_content
+      redirect_to import_preview_path(import)
     end
   end
 end
