@@ -19,12 +19,16 @@ module Ixport
       @fields ||= []
     end
 
-    def self.match_on(key)
-      @match_field = key.to_sym
+    def self.match_on(*keys)
+      @match_fields = keys.map(&:to_sym)
+    end
+
+    def self.match_fields
+      @match_fields || []
     end
 
     def self.match_field
-      @match_field
+      match_fields.first
     end
   end
 end

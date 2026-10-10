@@ -19,7 +19,7 @@ module Ixport
 
     def row_for(cells, number)
       values = values_of(cells)
-      existing = existing_records[values[match_field]]
+      existing = existing_records[match_key(values)]
       record = existing ? existing.tap { |found| found.assign_attributes(values) } : @importer.records.new(values)
       return Row.new(number: number, record: record, outcome: :refused, reason: record.errors.full_messages.to_sentence) unless record.valid?
 
@@ -34,14 +34,19 @@ module Ixport
       @import.mapping.to_h { |column, field| [ field.to_sym, cells[column.to_i] ] }
     end
 
-    def match_field
-      @importer.class.match_field
+    def match_fields
+      @importer.class.match_fields
+    end
+
+    def match_key(values)
+      key = match_fields.map { |field| values[field] }
+      key.map(&:to_s) unless key.any?(&:blank?)
     end
 
     def existing_records
       @existing_records ||= begin
-        match_values = data_rows.map { |cells| values_of(cells)[match_field] }.compact_blank
-        @importer.records.where(match_field => match_values).index_by { |record| record.public_send(match_field).to_s }
+        candidates = match_fields.to_h { |field| [ field, data_rows.map { |cells| values_of(cells)[field] }.compact_blank ] }
+        @importer.records.where(candidates).index_by { |record| match_fields.map { |field| record.public_send(field).to_s } }
       end
     end
   end
