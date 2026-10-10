@@ -111,6 +111,15 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ @import ], RecordingRunner.enqueued
   end
 
+  test "while a host's own runner works, the import's page shows it as running" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+    follow_redirect!
+
+    assert_select "[data-import-running]", text: "This import is running."
+  end
+
   private
 
   def use_wallflower

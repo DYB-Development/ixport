@@ -25,6 +25,10 @@ module Ixport
       status == "finished"
     end
 
+    def running?
+      status == "running"
+    end
+
     def step
       return :result if finished?
 

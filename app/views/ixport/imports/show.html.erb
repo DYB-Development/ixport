@@ -1,20 +1,25 @@
-<%= ui_show_page(title: "Import finished", back_url: root_path) %>
+<% heading = @import.running? ? "Import running" : "Import finished" %>
+<%= ui_show_page(title: heading, back_url: root_path) %>
 <%= ui_page(max_width: :md) do %>
-  <%= ui_page_header(title: "Import finished") %>
-  <%= ui_grid(cols: { default: 1, sm: 2 }) do %>
-    <%= ui_stat_card(label: "Added", value: tag.span(@import.added_count, data: { result_count: "added" })) %>
-    <%= ui_stat_card(label: "Updated", value: tag.span(@import.updated_count, data: { result_count: "updated" })) %>
-  <% end %>
-  <% if @import.refusals.any? %>
-    <%= ui_section(title: "Refused") do %>
-      <ul>
-        <% @import.refusals.each do |refusal| %>
-          <%= tag.li(data: { refused_row: true }) do %>
-            Row <%= tag.span(refusal.row_number, data: { row_number: true }) %>
-            <%= tag.span(refusal.reason, data: { reason: true }) %>
+  <%= ui_page_header(title: heading) %>
+  <% if @import.running? %>
+    <%= ui_alert(type: :info, message: tag.span("This import is running.", data: { import_running: true })) %>
+  <% else %>
+    <%= ui_grid(cols: { default: 1, sm: 2 }) do %>
+      <%= ui_stat_card(label: "Added", value: tag.span(@import.added_count, data: { result_count: "added" })) %>
+      <%= ui_stat_card(label: "Updated", value: tag.span(@import.updated_count, data: { result_count: "updated" })) %>
+    <% end %>
+    <% if @import.refusals.any? %>
+      <%= ui_section(title: "Refused") do %>
+        <ul>
+          <% @import.refusals.each do |refusal| %>
+            <%= tag.li(data: { refused_row: true }) do %>
+              Row <%= tag.span(refusal.row_number, data: { row_number: true }) %>
+              <%= tag.span(refusal.reason, data: { reason: true }) %>
+            <% end %>
           <% end %>
-        <% end %>
-      </ul>
+        </ul>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>
