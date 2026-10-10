@@ -4,6 +4,9 @@ module Ixport
   class Engine < ::Rails::Engine
     isolate_namespace Ixport
 
-    config.after_initialize { Ixport.check_registrations! }
+    config.after_initialize do
+      Ixport.check_registrations!
+      Ixport.install_background_runner!
+    end
   end
 end

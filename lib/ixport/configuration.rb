@@ -2,7 +2,7 @@
 
 module Ixport
   class Configuration
-    attr_accessor :authentication_method, :current_person_method, :current_account_method, :layout, :inline_row_limit
+    attr_accessor :authentication_method, :current_person_method, :current_account_method, :layout, :inline_row_limit, :background_runner
 
     def initialize
       @authentication_method = :authenticate_user!
@@ -10,6 +10,7 @@ module Ixport
       @current_account_method = :current_account
       @layout = "application"
       @inline_row_limit = 1_000
+      @background_runner = nil
     end
   end
 
