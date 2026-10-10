@@ -3,6 +3,17 @@
 require "test_helper"
 
 class Ixport::RegistrationsTest < ActiveSupport::TestCase
+  class ProductImportPolicy
+    def initialize(person, account)
+      @person = person
+      @account = account
+    end
+
+    def create?
+      @person == "admin"
+    end
+  end
+
   def teardown
     Ixport.reset_registrations!
   end
@@ -53,5 +64,11 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
     Ixport.register_export(:products, title: "Products", exporter: "ProductExporter")
 
     assert Ixport.export_registration(:products).allows?("rep", "North")
+  end
+
+  test "a rule can call the host's own Pundit policy to decide" do
+    Ixport.register_import(:products, title: "Products", importer: "ProductImporter", allow: ->(person, account) { ProductImportPolicy.new(person, account).create? })
+
+    assert_equal [ true, false ], [ Ixport.registration(:products).allows?("admin", "North"), Ixport.registration(:products).allows?("rep", "North") ]
   end
 end
