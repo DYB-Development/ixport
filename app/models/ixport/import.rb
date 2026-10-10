@@ -14,6 +14,10 @@ module Ixport
     validate :file_has_header_row, on: :create
     validate :file_within_inline_row_limit, on: :create
 
+    def run!(importer)
+      RowWalk.new(self, importer).rows.each { |row| row.record.save! unless row.outcome == :refused }
+    end
+
     def importer_class
       Ixport.registration(key).importer.constantize
     end
