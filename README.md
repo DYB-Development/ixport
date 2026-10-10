@@ -88,6 +88,8 @@ A fixed export is a CSV download whose columns the app chooses. Register each on
 Ixport.register_export :products, title: "Products", exporter: "ProductExporter"
 ```
 
+An app whose registered exporter class does not exist fails to boot, with a message naming the class.
+
 An exporter lists its columns, each with the label that heads it in the CSV. A column can come from a related record by naming the association it comes through. `records` returns the records to export, reached through the `person` and `account` the download is for:
 
 ```ruby
