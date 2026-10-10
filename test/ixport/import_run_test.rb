@@ -24,6 +24,14 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ [ "B2", 200 ] ], @account.products.pluck(:sku, :price_cents)
   end
 
+  test "a row that matches a record and passes validation updates it with the row's mapped values" do
+    product = @account.products.create!(sku: "A1", price_cents: 100)
+
+    import_of("SKU,Price\nA1,150\n").run!(importer)
+
+    assert_equal 150, product.reload.price_cents
+  end
+
   private
 
   def importer
