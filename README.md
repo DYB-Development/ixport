@@ -74,7 +74,7 @@ Each field's key is the record's attribute name. ixport looks up every match val
 
 ## Uploading and mapping a file
 
-From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file has no header row, or, in an app with no background runner, has more rows than `config.inline_row_limit`.
+From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file is not UTF-8 text, when its quoting is broken (the message names the line where reading stopped), when it has no header row, or, in an app with no background runner, when it has more rows than `config.inline_row_limit`. A byte order mark at the start of the file is ignored, so the first column keeps its name.
 
 After uploading, the person matches each column of the file's header row to one of the importer's fields, by its label, or skips it. Saving the mapping moves them on to the preview.
 
@@ -87,6 +87,8 @@ The person runs the import from the preview. With no background runner configure
 The import's result page then shows how many rows were added and how many updated, and lists each refused row. It shows the same thing on every later visit. A finished import offers no Run button, its preview leads to its result page, and running it again adds or changes nothing.
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
+
+An import whose run raises an error stops there and is marked failed. Its page shows the error's message and how many rows were added and updated before it stopped, and those rows stay saved. The error is reported through `Rails.error`. Through wallflower, the task fails with the same message and still links to the import's page.
 
 The engine's root page also lists the person's imports in the current account, newest first. Each shows its title, file name, status and date, and its added, updated and refused counts once it has run. Each opens the page for the step the import has reached: its mapping, its preview, or its result.
 
