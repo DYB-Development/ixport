@@ -12,8 +12,7 @@ module Ixport
     has_one_attached :file
     has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
-    validate :file_has_header_row, on: :create
-    validate :file_within_inline_row_limit, on: :create, unless: -> { Ixport.configuration.background_runner }
+    validate :incoming_file_is_usable, on: :create
 
     def run!(reporter: NullReporter.new)
       with_lock do
@@ -72,14 +71,18 @@ module Ixport
       update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
     end
 
-    def file_has_header_row
-      errors.add(:file, "This file has no header row.") if CSV.parse_line(incoming_file_contents).blank?
+    def incoming_file_is_usable
+      rows = CSV.parse(incoming_file_contents)
+      return errors.add(:file, "This file has no header row.") if rows.first.blank?
+
+      check_inline_row_limit(rows.size - 1) unless Ixport.configuration.background_runner
+    rescue CSV::MalformedCSVError => error
+      errors.add(:file, "This file could not be read past line #{error.line_number}. Check the quotes on that line.")
     end
 
-    def file_within_inline_row_limit
+    def check_inline_row_limit(row_count)
       limit = Ixport.configuration.inline_row_limit
-      rows = [ CSV.parse(incoming_file_contents).size - 1, 0 ].max
-      errors.add(:file, "This file has #{rows} rows, and the most an import can have is #{limit}.") if rows > limit
+      errors.add(:file, "This file has #{row_count} rows, and the most an import can have is #{limit}.") if row_count > limit
     end
 
     def incoming_file_contents

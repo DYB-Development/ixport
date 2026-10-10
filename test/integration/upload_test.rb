@@ -74,4 +74,10 @@ class UploadTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to "/data_imports/imports/#{Ixport::Import.last.id}/mapping"
   end
+
+  test "a file whose quoting is broken is refused with a message naming the line where reading stopped" do
+    post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("broken_quotes.csv", "text/csv") }
+
+    assert_select "[data-upload-error]", text: "This file could not be read past line 2. Check the quotes on that line."
+  end
 end
