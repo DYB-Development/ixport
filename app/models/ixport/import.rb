@@ -13,7 +13,7 @@ module Ixport
     has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
     validate :file_has_header_row, on: :create
-    validate :file_within_inline_row_limit, on: :create
+    validate :file_within_inline_row_limit, on: :create, unless: -> { Ixport.configuration.background_runner }
 
     def run!(importer)
       with_lock do
