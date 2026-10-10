@@ -3,7 +3,7 @@ Ixport::Engine.routes.draw do
   resources :exports, only: %i[index show] do
     resources :templates, only: %i[new create], controller: "export_templates"
   end
-  resources :export_templates, only: %i[show update]
+  resources :export_templates, only: %i[show update destroy]
   resources :imports, only: %i[new create show] do
     resource :mapping, only: %i[show update]
     resource :preview, only: :show

@@ -96,4 +96,12 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "Price list", [ "sku", "price_cents" ] ], template.reload.then { |saved| [ saved.name, saved.columns ] }
   end
+
+  test "a person deletes a template" do
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "sku" ], person: @person, account: @account)
+
+    delete "/data_imports/export_templates/#{template.id}"
+
+    assert_not Ixport::ExportTemplate.exists?(template.id)
+  end
 end

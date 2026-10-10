@@ -3,7 +3,7 @@
 module Ixport
   class ExportTemplatesController < ApplicationController
     before_action :find_chosen_export, only: %i[new create]
-    before_action :find_template, only: %i[show update]
+    before_action :find_template, only: %i[show update destroy]
 
     def new
       @columns = @registration.exporter.constantize.columns
@@ -21,6 +21,11 @@ module Ixport
 
     def update
       @template.update!(name: params[:name], columns: known_columns(@template.registration))
+      redirect_to exports_path
+    end
+
+    def destroy
+      @template.destroy!
       redirect_to exports_path
     end
 
