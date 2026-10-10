@@ -26,6 +26,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "t.references :person, polymorphic: true, null: false"
   end
 
+  test "the migration lets an import belong to an account" do
+    assert_includes migration, "t.references :account, polymorphic: true, null: true"
+  end
+
   private
 
   def migration
