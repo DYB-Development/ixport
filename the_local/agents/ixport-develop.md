@@ -1,6 +1,6 @@
 ---
 name: ixport-develop
-description: Use PROACTIVELY for setting up CSV imports in a Rails app that has ixport — registering a mapped import, writing its importer class, declaring the fields a person maps a CSV's columns to, choosing the field rows are matched on, scoping the records an import may add or update to the signed-in person or account, linking to an import's upload page, explaining the upload, column-matching and preview pages and their messages, and fixing a boot that fails with Ixport::MissingImporter — MUST BE USED instead of hand-writing a CSV upload controller, a column-mapping form, a row-matching loop or an import preview.
+description: Use PROACTIVELY for setting up CSV imports in a Rails app that has ixport — registering a mapped import, writing its importer class, declaring the fields a person maps a CSV's columns to, choosing the field rows are matched on, scoping the records an import may add or update to the signed-in person or account, linking to an import's upload page, explaining the upload, column-matching, preview and result pages and their messages, explaining what running an import saves and refuses, and fixing a boot that fails with Ixport::MissingImporter — MUST BE USED instead of hand-writing a CSV upload controller, a column-mapping form, a row-matching loop, an import preview or a loop that saves imported rows.
 tools: Bash, Read, Write, Edit, Grep
 scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports the host app registers, each backed by an importer class the host writes
 ---
@@ -9,7 +9,7 @@ This local adds mapped imports to a Rails app that already has ixport installed 
 
 ## What ixport is
 
-ixport is a Rails engine that lets a signed-in person import a host app's records from CSV files. The app registers each kind of CSV a person can import, called a mapped import, and writes an importer class that names the fields the CSV's columns map to, the one field rows are matched on, and the records a row may add to or update. A person picks an import, uploads a CSV file for it, matches each of the file's columns to one of the importer's fields, and sees a preview of how many rows will add a record, update one or be refused. Fire this local when a developer wants people to load one of the app's records from a spreadsheet, wants to link to an import's upload page, asks what the upload, column-matching or preview pages do, or when the app fails to boot with `Ixport::MissingImporter`.
+ixport is a Rails engine that lets a signed-in person import a host app's records from CSV files. The app registers each kind of CSV a person can import, called a mapped import, and writes an importer class that names the fields the CSV's columns map to, the one field rows are matched on, and the records a row may add to or update. A person picks an import, uploads a CSV file for it, matches each of the file's columns to one of the importer's fields, sees a preview of how many rows will add a record, update one or be refused, runs the import to save those rows, and then sees how many rows were added and updated and each refused row. Fire this local when a developer wants people to load one of the app's records from a spreadsheet, wants to link to an import's upload page, asks what the upload, column-matching, preview or result pages do, asks what running an import saves, or when the app fails to boot with `Ixport::MissingImporter`.
 
 ## Interface
 
@@ -26,7 +26,9 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
 - `POST /imports` — takes the `key` and `file` parameters, stores the uploaded file as an import belonging to the signed-in person and the current account, and redirects to that import's column-matching page.
 - `GET /imports/:import_id/mapping` — the column-matching page, titled "Match columns", which lists each column header from the file's first row beside a select of the importer's field labels and a "Skip" choice.
 - `PATCH /imports/:import_id/mapping` — saves which field each column maps to and redirects to the import's preview page.
-- `GET /imports/:import_id/preview` — the preview page, titled "Preview", which shows how many rows will add a record, update one or be refused, lists each updating row and each refused row by its row number, and saves nothing.
+- `GET /imports/:import_id/preview` — the preview page, titled "Preview", which shows how many rows will add a record, update one or be refused, lists each updating row and each refused row by its row number, saves nothing, and offers a "Run import" button, and which redirects to the import's result page once the import has run.
+- `POST /imports/:import_id/run` — saves every row that adds or updates a record, records every refused row with its reason, marks the import finished, and redirects to the import's result page, and does nothing but redirect when the import has already run.
+- `GET /imports/:id` — the result page, titled "Import finished", which shows how many rows the run added and updated and lists each refused row by its row number with its reason.
 
 ## How to use it
 
@@ -78,8 +80,15 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
     - A row that matches nothing, a row whose match value is blank, and every row of a file with no column mapped to the match field will add a new record built from `records`.
     - A row whose added or updated record is not valid will be refused, with the record's own validation messages as the reason.
 15. The preview page shows three counts, "Will add", "Will update" and "Will be refused". Under them it lists each row that will update a record under "Will update", and each refused row with its reason under "Will be refused", each by its row number in the file, where the header row is row 1. The refusal reasons are the record's validation messages, so tell the developer that the record's validations decide which rows are refused and what a person reads.
-16. Viewing the preview adds and changes no record. Its back link returns the person to the "Match columns" page to change the mapping. This version of ixport has no step after the preview, so no import saves a record yet.
-17. An import's column-matching and preview pages are visible only to the person who uploaded it, in the account it was uploaded in. Anyone else, and the same person in another account, gets a not found response.
+16. Viewing the preview adds and changes no record. Its back link returns the person to the "Match columns" page to change the mapping.
+17. Pressing "Run import" on the preview page runs the import within the same request, with no background job:
+    - Every row's outcome is decided again by the rules in step 14, against the records as they are at that moment, so the result can differ from the preview when records changed in between.
+    - Every row that adds or updates a record is saved with `save!`, so the record's callbacks run as for any other save.
+    - Every refused row is recorded with its row number and reason, and no record is saved for it.
+    - The whole run happens in one database transaction. When any save raises, such as on a database constraint the record's validations do not cover, nothing from the run is saved and the import stays unrun. Tell the developer to cover every database constraint on the record with a validation, so a bad row is refused rather than stopping the whole run.
+    - An import runs once. A second run request for the same import, including one sent at the same time as the first, adds and changes nothing and redirects to the result page.
+18. After the run, the person is on the "Import finished" page. It shows two counts, "Added" and "Updated", and, when any row was refused, lists each refused row under "Refused" by its row number with its reason. Returning to this page later shows the same counts and refused rows. The page does not check whether the import has run, so visiting it for an import that has not run shows both counts as 0. Once an import has run, its preview page redirects to this page, so it offers no "Run import" button.
+19. An import's column-matching, preview, run and result pages are visible only to the person who uploaded it, in the account it was uploaded in. Anyone else, and the same person in another account, gets a not found response.
 
 ## Conventions
 
@@ -91,5 +100,5 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
 - When a record's attribute is renamed or removed, update the matching `field` line and any `match_on` that names it in the same change.
 - When an importer class is renamed, update its `importer:` string in `config/initializers/ixport.rb` in the same change.
 - When an import's key is changed, update every link to its upload page in the same change.
-- Never write an upload form, a column-matching form, a preview page or a controller for them in the app. The engine serves all three pages.
-- Installing ixport, mounting the engine, file storage, sign-in, how the current person and account are found, and the inline row limit are out of scope for this local and belong to `ixport-install`.
+- Never write an upload form, a column-matching form, a preview page, a run action, a result page or a controller for them in the app. The engine serves all of them.
+- Installing ixport, mounting the engine, the tables an import and its refused rows are stored in, file storage, sign-in, how the current person and account are found, and the inline row limit are out of scope for this local and belong to `ixport-install`.

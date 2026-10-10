@@ -26,6 +26,8 @@ develop:
   - GET /imports/:import_id/mapping
   - PATCH /imports/:import_id/mapping
   - GET /imports/:import_id/preview
+  - POST /imports/:import_id/run
+  - GET /imports/:id
 
 sources:
   - lib/ixport.rb
@@ -47,3 +49,7 @@ sources:
   - app/models/ixport/row_walk.rb
   - app/controllers/ixport/previews_controller.rb
   - app/views/ixport/previews/show.html.erb
+  - app/models/ixport/import_refusal.rb
+  - app/controllers/ixport/runs_controller.rb
+  - app/views/ixport/imports/show.html.erb
+  - lib/generators/ixport/install/templates/create_ixport_import_refusals.rb.erb
