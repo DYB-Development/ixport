@@ -12,6 +12,7 @@ install:
   - config.layout
   - config.inline_row_limit
   - config.background_runner
+  - config.base_controller
 
 develop:
   - Ixport.register_import
