@@ -54,6 +54,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes refusals_migration, "create_table :ixport_import_refusals"
   end
 
+  test "copies a migration that creates the export templates table" do
+    assert_equal 1, Dir.glob("#{destination}/db/migrate/*_create_ixport_export_templates.rb").size
+  end
+
   private
 
   def refusals_migration
