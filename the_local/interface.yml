@@ -1,8 +1,9 @@
-scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the fixed exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes
+scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes, where an export is either fixed or chosen, and a chosen export lets the account save named templates of picked columns
 
 install:
   - gem "ixport"
   - bin/rails generate ixport:install
+  - bin/rails generate ixport:update
   - mount Ixport::Engine
   - Ixport.configure
   - config.authentication_method
@@ -35,6 +36,12 @@ develop:
   - value
   - GET /exports
   - GET /exports/:id
+  - GET /exports/:export_id/templates/new
+  - POST /exports/:export_id/templates
+  - GET /export_templates/:id
+  - GET /export_templates/:id/edit
+  - PATCH /export_templates/:id
+  - DELETE /export_templates/:id
 
 sources:
   - lib/ixport.rb
@@ -64,3 +71,9 @@ sources:
   - app/models/ixport/csv_writer.rb
   - app/controllers/ixport/exports_controller.rb
   - app/views/ixport/exports/index.html.erb
+  - lib/generators/ixport/update/update_generator.rb
+  - lib/generators/ixport/install/templates/create_ixport_export_templates.rb.erb
+  - app/models/ixport/export_template.rb
+  - app/controllers/ixport/export_templates_controller.rb
+  - app/views/ixport/export_templates/new.html.erb
+  - app/views/ixport/export_templates/edit.html.erb
