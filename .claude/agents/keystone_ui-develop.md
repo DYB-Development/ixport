@@ -206,8 +206,15 @@ two exceptions: `ui_page`'s `padding:` treats any value other than `:none` as
    - When the preference supplied for `:navigation` holds
      `{ "placement" => "left" }` or `"right"`, it draws a sidebar on that side
      from `lg:` up instead, with each group's label above its tabs, the logo at
-     its top and the menus at its bottom. Any other placement draws the top
-     bar. An `"order"` list of `{ "group" => label, "tabs" => [tab key strings] }`
+     its top and the menus at its bottom. A menu there opens in place: the
+     `data-dropdown-target="menu"` panel inside a `data-controller="dropdown"`
+     element drops onto its own line below its button inside the sidebar, even
+     when the app's own CSS positions it absolutely, as long as that CSS sits
+     in a layer below Tailwind's utilities such as `components`. A closed
+     panel (the `hidden` class) stays invisible and out of the tab order but
+     still counts toward the sidebar's width, so opening a menu never
+     changes the sidebar's width. Any other
+     placement draws the top bar, whose menus still open as dropdowns. An `"order"` list of `{ "group" => label, "tabs" => [tab key strings] }`
      entries draws the named groups and tabs first, in that order, then the
      rest in declared order, ignoring names no longer declared.
    - When the app sets `config.current_tab_supplier`, the tab whose key it
