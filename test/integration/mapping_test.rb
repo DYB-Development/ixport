@@ -17,6 +17,7 @@ class MappingTest < ActionDispatch::IntegrationTest
 
   def teardown
     ApplicationController.signed_in_user = nil
+    ApplicationController.signed_in_account = nil
     Ixport.reset_registrations!
   end
 
@@ -52,6 +53,15 @@ class MappingTest < ActionDispatch::IntegrationTest
 
   test "another person gets not found for this import" do
     ApplicationController.signed_in_user = User.create!(name: "Other rep")
+
+    get "/data_imports/imports/#{@import.id}/mapping"
+
+    assert_response :not_found
+  end
+
+  test "the same person viewing from another account gets not found for this import" do
+    @import.update!(account: Account.create!(name: "North"))
+    ApplicationController.signed_in_account = Account.create!(name: "South")
 
     get "/data_imports/imports/#{@import.id}/mapping"
 
