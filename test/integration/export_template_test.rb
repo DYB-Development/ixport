@@ -62,4 +62,13 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_equal "Price,SKU\n100,A1\n", response.body
   end
+
+  test "a template whose column the exporter no longer lists still downloads, without that column" do
+    @account.products.create!(sku: "A1", price_cents: 100)
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "cost_cents", "sku" ], person: @person, account: @account)
+
+    get "/data_imports/export_templates/#{template.id}"
+
+    assert_equal "SKU\nA1\n", response.body
+  end
 end
