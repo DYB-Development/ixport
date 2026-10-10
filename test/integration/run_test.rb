@@ -88,6 +88,12 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ "ixport_import", { "import_id" => @import.id }, "/background/tasks/#{task.id}" ], [ task.kind, task.params, URI(response.location).path ]
   end
 
+  test "with wallflower loaded but no runner configured, an import still runs inside the request" do
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_equal [ 0, "finished" ], [ Wallflower::Task.count, @import.reload.status ]
+  end
+
   private
 
   def use_wallflower
