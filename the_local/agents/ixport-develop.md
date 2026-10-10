@@ -1,6 +1,6 @@
 ---
 name: ixport-develop
-description: Use PROACTIVELY for setting up CSV imports and exports in a Rails app that has ixport — registering a mapped import, writing its importer class, declaring the fields a person maps a CSV's columns to, choosing the field rows are matched on, scoping the records an import may add or update to the signed-in person or account, linking to an import's upload page, explaining the upload, column-matching, preview and result pages and their messages, explaining the list of a person's past imports on the imports page, explaining what running an import saves and refuses, explaining what a person sees when an import fails partway and which rows it keeps, running imports in a background job through the app's own runner class, explaining what a person sees while an import runs in the background, registering a fixed export or a chosen export, writing its exporter class, declaring its columns including columns taken from a related record, computing a column's value, scoping the records an export may hold, letting an account save named templates of picked columns for an export, explaining the new, edit and delete template pages and what a template's download holds, linking to the exports page, one export's CSV download or one template's download, making the app's own import job fail with Ixport::ImportFailed, and fixing a boot that fails with Ixport::MissingImporter or Ixport::MissingExporter — MUST BE USED instead of hand-writing a CSV upload controller, a column-mapping form, a row-matching loop, an import preview, a loop that saves imported rows, a background job that saves imported rows, a rescue that records why an import stopped, a CSV download action, a loop that writes records to a CSV, or a model and form for saved column picks.
+description: Use PROACTIVELY for setting up CSV imports and exports in a Rails app that has ixport — registering a mapped import, writing its importer class, declaring the fields a person maps a CSV's columns to, choosing the field rows are matched on, scoping the records an import may add or update to the signed-in person or account, limiting which people may use an import or export with an access rule such as the app's own Pundit policy, linking to an import's upload page, explaining the upload, column-matching, preview and result pages and their messages, explaining the list of a person's past imports on the imports page, explaining what running an import saves and refuses, explaining what a person sees when an import fails partway and which rows it keeps, running imports in a background job through the app's own runner class, explaining what a person sees while an import runs in the background, registering a fixed export or a chosen export, writing its exporter class, declaring its columns including columns taken from a related record, computing a column's value, scoping the records an export may hold, letting an account save named templates of picked columns for an export, explaining the new, edit and delete template pages and what a template's download holds, linking to the exports page, one export's CSV download or one template's download, making the app's own import job fail with Ixport::ImportFailed, and fixing a boot that fails with Ixport::MissingImporter or Ixport::MissingExporter — MUST BE USED instead of hand-writing a CSV upload controller, a column-mapping form, a row-matching loop, an import preview, a loop that saves imported rows, a background job that saves imported rows, a rescue that records why an import stopped, a permission check in front of an import or export page, a CSV download action, a loop that writes records to a CSV, or a model and form for saved column picks.
 tools: Bash, Read, Write, Edit, Grep
 scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports and the exports the host app registers, each import backed by an importer class and each export by an exporter class the host writes, where an export is either fixed or chosen, and a chosen export lets the account save named templates of picked columns
 ---
@@ -13,7 +13,7 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
 
 ## Interface
 
-- `Ixport.register_import` — `Ixport.register_import(key, title:, importer:)` registers one mapped import under a key, with the title a person sees and the name of its importer class.
+- `Ixport.register_import` — `Ixport.register_import(key, title:, importer:, allow: nil)` registers one mapped import under a key, with the title a person sees, the name of its importer class, and optionally an access rule that decides which people may use it.
 - `Ixport::Importer` — the base class every importer inherits from.
 - `field` — `field key, label:` is called in an importer's class body and declares one field a CSV column can be mapped to, with the label a person sees.
 - `match_on` — `match_on key` is called in an importer's class body and names the one declared field a row is matched to an existing record on.
@@ -33,7 +33,7 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
 - `GET /imports/:import_id/preview` — the preview page, titled "Preview", which shows how many rows will add a record, update one or be refused, lists each updating row and each refused row by its row number, saves nothing, and offers a "Run import" button, and which redirects to the import's result page once the import has finished or failed, or while it is running in the background.
 - `POST /imports/:import_id/run` — with no background runner, saves every row that adds or updates a record, records every refused row with its reason, marks the import finished, or failed when the run stops on an error, and redirects to the import's result page, and does nothing but redirect when the import has already finished or failed; with a background runner, marks a pending import running, hands it to the runner, and redirects to the wallflower task's page or, for the app's own runner, to the import's result page, and hands nothing to the runner and redirects to the import's result page when the import is already running, finished or failed.
 - `GET /imports/:id` — the result page, titled "Import finished", which shows how many rows the run added and updated and lists each refused row by its row number with its reason, titled "Import running" with the message "This import is running." while a background run is under way, titled "Import failed" with the error the run stopped on and the counts of rows saved before it stopped when the run failed, and which redirects to the import's preview page when the import has neither run nor started running.
-- `Ixport.register_export` — `Ixport.register_export(key, title:, exporter:, chosen: false)` registers one export under a key, with the title a person sees and the name of its exporter class, as a fixed export by default or as a chosen export when `chosen: true`.
+- `Ixport.register_export` — `Ixport.register_export(key, title:, exporter:, chosen: false, allow: nil)` registers one export under a key, with the title a person sees and the name of its exporter class, as a fixed export by default or as a chosen export when `chosen: true`, and optionally an access rule that decides which people may use it.
 - `Ixport::Exporter` — the base class every exporter inherits from.
 - `column` — `column key, label:, through: nil` is called in an exporter's class body and declares one column of the CSV, with the header a person sees, read from the record's `key` attribute, or from the `key` attribute of the related record named by `through:`.
 - `value` — `value(record, column)` is the instance method that returns one cell of the CSV for one record and one declared column, and an exporter may override it to compute a cell.
@@ -83,9 +83,20 @@ Steps 1 to 24 add a mapped import, and steps 19 to 23 of those cover running imp
    Ixport.register_import :products, title: "Products", importer: "ProductImporter"
    ```
    Pass `importer:` the class name as a string, never the class itself, so the initializer does not load the class before the app's code is ready.
+
+   Ask the developer whether every signed-in person may use this import, or only some. Do not decide who may. When only some may, pass `allow:` a rule that takes the signed-in person and the current account and returns true for a person who may use it, such as a call to the app's own Pundit policy:
+   ```ruby
+   Ixport.register_import :products, title: "Products", importer: "ProductImporter",
+     allow: ->(person, account) { ProductImportPolicy.new(person, account).create? }
+   ```
+   - A registration with no `allow:` is open to every signed-in person.
+   - The rule is called on every request to the import's pages and on every visit to the engine's root page, so it must not change anything.
+   - `account` is `nil` when the app has no current account, so the rule must handle that when it can happen.
+   - A person the rule refuses does not see the import on the engine's root page, does not see their own past imports of it under "Your imports", and gets a not found response from its upload, column-matching, preview, run and result pages, including for imports they uploaded before the rule refused them.
+   - The rule is checked within the person's request only. A background run already handed to a runner still runs to the end.
 9. Start the app. If it fails to boot with `Ixport::MissingImporter`, the message names the import key and the class name that does not exist. Fix the class name in the registration, or the class name or file name of the importer, so the two match.
-10. Visit the path the engine is mounted under while signed in. The page shows the heading "Imports" and lists each registered import by its title, in the order the imports were registered. With no import registered it shows "No imports are set up yet." Below that, once the signed-in person has uploaded any file, a "Your imports" section lists their past imports:
-    - It lists only imports uploaded by the signed-in person in the current account, newest first. Imports by other people, or by the same person in another account, are not listed.
+10. Visit the path the engine is mounted under while signed in. The page shows the heading "Imports" and lists each registered import the signed-in person is allowed to use by its title, in the order the imports were registered. With no import registered, or none the person is allowed to use, it shows "No imports are set up yet." Below that, once the signed-in person has uploaded any file, a "Your imports" section lists their past imports:
+    - It lists only imports uploaded by the signed-in person in the current account, newest first, of imports that are still registered and that the person is allowed to use. Imports by other people, or by the same person in another account, are not listed.
     - Each shows the import's title, the uploaded file's name, its status, "Pending", "Running", "Finished" or "Failed", and the date it was uploaded, such as "Oct 10, 2026".
     - A finished import also shows its "Added", "Updated" and "Refused" counts. A pending, running or failed import shows no counts.
     - Each title links to the step the import has reached: the "Import finished" page once it has run, the "Preview" page once its mapping is saved with at least one column mapped, and otherwise the "Match columns" page. A running import's link leads to its "Import running" page, and a failed import's link leads to its "Import failed" page.
@@ -94,7 +105,7 @@ Steps 1 to 24 add a mapped import, and steps 19 to 23 of those cover running imp
     ```erb
     <%= link_to "Import products", ixport.new_import_path(key: :products) %>
     ```
-    The key must be one that is registered. An unregistered key gets a not found response.
+    The key must be one that is registered. An unregistered key, or one whose rule refuses the person, gets a not found response. When the import has an `allow:` rule, show the link only to people the same rule allows.
 12. On the upload page a person chooses a CSV file and presses Upload. The upload is refused, and the upload page is shown again with status 422 and one of these messages, when:
     - the file is not UTF-8 text: "This file is not UTF-8 text. Save it as UTF-8 and upload it again."
     - the file is not valid CSV, such as a quote left open: "This file could not be read past line N. Check the quotes on that line."
@@ -168,7 +179,7 @@ Whether imports run within the request, through wallflower, or through the app's
     - `set_total(total)` is called once, before the first row, with the number of data rows.
     - `refuse(label:, reason:)` is called for each refused row, with a label such as "Row 4" and the refusal reason.
     - `advance` is called once after each row, saved or refused.
-24. An import's column-matching, preview, run and result pages are visible only to the person who uploaded it, in the account it was uploaded in. Anyone else, and the same person in another account, gets a not found response.
+24. An import's column-matching, preview, run and result pages are visible only to the person who uploaded it, in the account it was uploaded in, while the import's `allow:` rule allows them. Anyone else, the same person in another account, and the same person once the rule refuses them, gets a not found response.
 
 ### An export
 
@@ -221,8 +232,17 @@ Whether imports run within the request, through wallflower, or through the app's
     Ixport.register_export :products, title: "Products", exporter: "ProductExporter", chosen: true
     ```
     Pass `exporter:` the class name as a string, never the class itself, so the initializer does not load the class before the app's code is ready.
+
+    Ask the developer whether every signed-in person may use this export, or only some. Do not decide who may. When only some may, pass `allow:` a rule that takes the signed-in person and the current account and returns true for a person who may use it, the same way as an import's rule in step 8:
+    ```ruby
+    Ixport.register_export :products, title: "Products", exporter: "ProductExporter", chosen: true,
+      allow: ->(person, account) { ProductExportPolicy.new(person, account).show? }
+    ```
+    - A registration with no `allow:` is open to every signed-in person.
+    - A person the rule refuses does not see the export on the exports page, and gets a not found response from its download and, for a chosen export, from its new template page, its template creation, and every one of its templates' download, edit, update and delete actions.
+    - The rule covers the export as a whole. Every template of a chosen export is allowed or refused with it, and a template cannot carry a rule of its own.
 34. Start the app. If it fails to boot with `Ixport::MissingExporter`, the message names the export key and the class name that does not exist. Fix the class name in the registration, or the class name or file name of the exporter, so the two match.
-35. Visit `exports` under the path the engine is mounted under while signed in. The page shows the heading "Exports" and lists each registered export by its title, in the order the exports were registered. With no export registered it shows "No exports are set up yet." The engine's root page lists imports only and does not link to this page.
+35. Visit `exports` under the path the engine is mounted under while signed in. The page shows the heading "Exports" and lists each registered export the signed-in person is allowed to use by its title, in the order the exports were registered. With no export registered, or none the person is allowed to use, it shows "No exports are set up yet." The engine's root page lists imports only and does not link to this page.
     - A fixed export's title links to its download.
     - A chosen export's title is not a link. Under it are the current account's templates for that export, ordered by name, each name linking to the template's download beside an "Edit" link, and then a "New template" button.
 36. When the developer wants a link to the exports page or to one fixed export's download from the app's own pages, ask where the link goes. Build its URL with the engine's route helpers and the export's registered key:
@@ -230,7 +250,7 @@ Whether imports run within the request, through wallflower, or through the app's
     <%= link_to "Exports", ixport.exports_path %>
     <%= link_to "Download products", ixport.export_path(:products) %>
     ```
-    The key must be one that is registered. An unregistered key gets a not found response. `export_path` also downloads a chosen export with every declared column, although the exports page does not link to it.
+    The key must be one that is registered. An unregistered key, or one whose rule refuses the person, gets a not found response. When the export has an `allow:` rule, show the link only to people the same rule allows. `export_path` also downloads a chosen export with every declared column, although the exports page does not link to it.
 37. A download builds the whole file within the same request, with no background job and no row limit, from the records `records` returns for the person downloading it, in the account current at that moment. This holds for a template's download too. Tell the developer that an export over a very large table makes that request slow.
 
 ### The templates of a chosen export
@@ -241,7 +261,7 @@ Whether imports run within the request, through wallflower, or through the app's
     - A select left at "None" adds nothing.
     - A column picked in more than one select is kept once, at its first position.
     - A template with no picked column produces a file with an empty header row and one empty row per record.
-40. A template belongs to the current account. Every person in that account sees it on the exports page and can download, edit or delete it. A person in another account gets a not found response. When the app has no current account, every template saved with no account is shared by every signed-in person with no account. Tell the developer this, and ask whether it is what they want.
+40. A template belongs to the current account. Every person in that account whom the export's `allow:` rule allows sees it on the exports page and can download, edit or delete it. A person in another account, or one the rule refuses, gets a not found response. When the app has no current account, every template saved with no account is shared by every signed-in person with no account. Tell the developer this, and ask whether it is what they want.
 41. A template's name link downloads a CSV holding only its picked columns, in its picked order, with each column's label as the header and one row per record from `records`. The file is named after the template's name, lower-cased with spaces and punctuation replaced by hyphens, such as `price-list.csv` for "Price list".
 42. Pressing "Edit" opens the page titled "Edit <template name>", with the export's title under it and a back link to the exports page. It shows the same fields as the new template page, filled with the template's name and picked columns. Pressing "Save template" replaces the name and picked columns by the rules in step 39 and returns the person to the exports page.
 43. The edit page's action menu has a Delete item. It deletes the template and returns the person to the exports page.
@@ -251,7 +271,7 @@ Whether imports run within the request, through wallflower, or through the app's
     <%= link_to "Edit", ixport.edit_export_template_path(template) %>
     <%= link_to "New template", ixport.new_export_template_path(:products) %>
     ```
-    `new_export_template_path` takes the chosen export's registered key. An unregistered key, or the key of a fixed export, gets a not found response.
+    `new_export_template_path` takes the chosen export's registered key. An unregistered key, the key of a fixed export, or the key of an export whose rule refuses the person, gets a not found response.
 
 ## Conventions
 
@@ -265,7 +285,9 @@ Whether imports run within the request, through wallflower, or through the app's
 - When a record's attribute or association is renamed or removed, update the matching `field`, `match_on` and `column` lines in the same change.
 - When an importer or exporter class is renamed, update its `importer:` or `exporter:` string in `config/initializers/ixport.rb` in the same change.
 - When an import's or export's key is changed, update every link to its upload page or download in the same change.
-- Past imports record their import's key. Before changing an import's key or removing its registration, tell the developer that while any past import under the old key remains, the engine's root page raises an error for the person who uploaded it, and ask what should happen to those imports.
+- Past imports record their import's key. Before changing an import's key or removing its registration, tell the developer that past imports under the old key drop off "Your imports" on the engine's root page, and that opening one of their pages raises an error, and ask what should happen to those imports.
+- Who may use an import or export is decided only by its `allow:` rule. Never write a before action, a policy check or a redirect in front of the engine's pages.
+- When an import or export has an `allow:` rule, every link to it from the app's own pages is shown only to people the same rule allows.
 - Saved templates record a chosen export's key and its picked column keys. Before changing a chosen export's key, removing its registration, or changing it to fixed, ask the developer what happens to the templates already saved for it:
   - A template whose export key is no longer registered no longer shows on the exports page, and opening its download or edit page raises an error.
   - A template whose export is changed to fixed no longer shows on the exports page, and its download and edit links still work.
