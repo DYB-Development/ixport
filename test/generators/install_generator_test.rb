@@ -58,6 +58,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_equal 1, Dir.glob("#{destination}/db/migrate/*_create_ixport_export_templates.rb").size
   end
 
+  test "copies a migration that links an import to the wallflower task that runs it" do
+    assert_equal 1, Dir.glob("#{destination}/db/migrate/*_add_wallflower_task_to_ixport_imports.rb").size
+  end
+
   private
 
   def refusals_migration
