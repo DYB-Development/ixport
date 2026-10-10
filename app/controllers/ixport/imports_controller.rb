@@ -3,6 +3,7 @@
 module Ixport
   class ImportsController < ApplicationController
     def index
+      @registrations = Ixport.registrations.values
     end
   end
 end

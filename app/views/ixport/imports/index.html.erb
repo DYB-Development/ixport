@@ -1,1 +1,10 @@
-<h1>Imports</h1>
+<%= ui_page(max_width: :md) do %>
+  <h1>Imports</h1>
+  <% if @registrations.empty? %>
+    <%= ui_alert(message: "No imports are set up yet.") %>
+  <% else %>
+    <% @registrations.each do |registration| %>
+      <div data-import><%= registration.title %></div>
+    <% end %>
+  <% end %>
+<% end %>
