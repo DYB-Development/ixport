@@ -12,6 +12,7 @@ module Ixport
     has_one_attached :file
 
     validate :file_has_header_row, on: :create
+    validate :file_within_inline_row_limit, on: :create
 
     def headers
       CSV.parse_line(file.download) || []
@@ -21,6 +22,12 @@ module Ixport
 
     def file_has_header_row
       errors.add(:file, "This file has no header row.") if CSV.parse_line(incoming_file_contents).blank?
+    end
+
+    def file_within_inline_row_limit
+      limit = Ixport.configuration.inline_row_limit
+      rows = [ CSV.parse(incoming_file_contents).size - 1, 0 ].max
+      errors.add(:file, "This file has #{rows} rows, and the most an import can have is #{limit}.") if rows > limit
     end
 
     def incoming_file_contents

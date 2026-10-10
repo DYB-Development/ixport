@@ -17,6 +17,7 @@ class UploadTest < ActionDispatch::IntegrationTest
   def teardown
     ApplicationController.signed_in_user = nil
     Ixport.reset_registrations!
+    Ixport.reset_configuration!
   end
 
   test "the upload page for a registered import asks for a CSV file" do
@@ -41,5 +42,13 @@ class UploadTest < ActionDispatch::IntegrationTest
     post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("empty.csv", "text/csv") }
 
     assert_select "[data-upload-error]", text: "This file has no header row."
+  end
+
+  test "a file with more rows than the inline row limit is refused with the limit and its row count" do
+    Ixport.configure { |config| config.inline_row_limit = 2 }
+
+    post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("three_rows.csv", "text/csv") }
+
+    assert_select "[data-upload-error]", text: "This file has 3 rows, and the most an import can have is 2."
   end
 end
