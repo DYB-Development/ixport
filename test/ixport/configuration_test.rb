@@ -14,4 +14,8 @@ class Ixport::ConfigurationTest < ActiveSupport::TestCase
   test "finds the current person through current_user unless the host names another method" do
     assert_equal :current_user, Ixport.configuration.current_person_method
   end
+
+  test "finds the current account through current_account unless the host names another method" do
+    assert_equal :current_account, Ixport.configuration.current_account_method
+  end
 end
