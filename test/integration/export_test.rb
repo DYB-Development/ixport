@@ -12,6 +12,15 @@ class ExportTest < ActionDispatch::IntegrationTest
     end
   end
 
+  class ProductWithAccountExporter < Ixport::Exporter
+    column :sku, label: "SKU"
+    column :name, label: "Account", through: :account
+
+    def records
+      account.products.order(:sku)
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -48,5 +57,14 @@ class ExportTest < ActionDispatch::IntegrationTest
     get "/data_imports/exports/invoices"
 
     assert_response :not_found
+  end
+
+  test "a column taken from a related record holds that record's value in each row" do
+    Ixport.register_export(:products, title: "Products", exporter: "ExportTest::ProductWithAccountExporter")
+    @account.products.create!(sku: "A1", price_cents: 100)
+
+    get "/data_imports/exports/products"
+
+    assert_equal "SKU,Account\nA1,North\n", response.body
   end
 end

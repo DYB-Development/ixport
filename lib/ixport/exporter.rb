@@ -2,7 +2,7 @@
 
 module Ixport
   class Exporter
-    Column = Struct.new(:key, :label, keyword_init: true)
+    Column = Struct.new(:key, :label, :through, keyword_init: true)
 
     attr_reader :person, :account
 
@@ -11,8 +11,8 @@ module Ixport
       @account = account
     end
 
-    def self.column(key, label:)
-      columns << Column.new(key: key.to_sym, label: label)
+    def self.column(key, label:, through: nil)
+      columns << Column.new(key: key.to_sym, label: label, through: through)
     end
 
     def self.columns
@@ -20,7 +20,8 @@ module Ixport
     end
 
     def value(record, column)
-      record.public_send(column.key)
+      source = column.through ? record.public_send(column.through) : record
+      source&.public_send(column.key)
     end
   end
 end
