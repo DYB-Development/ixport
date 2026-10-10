@@ -140,6 +140,15 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ @import ], RecordingRunner.enqueued
   end
 
+  test "a running import's preview leads to its page, which offers no Run button" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    post "/data_imports/imports/#{@import.id}/run"
+
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_redirected_to "/data_imports/imports/#{@import.id}"
+  end
+
   private
 
   def use_wallflower
