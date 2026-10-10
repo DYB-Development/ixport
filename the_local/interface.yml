@@ -15,14 +15,17 @@ develop:
   - Ixport.register_import
   - Ixport::Importer
   - field
-  - find_existing
-  - new_row?
+  - match_on
+  - records
+  - person
+  - account
   - Ixport::MissingImporter
   - GET /
   - GET /imports/new
   - POST /imports
   - GET /imports/:import_id/mapping
   - PATCH /imports/:import_id/mapping
+  - GET /imports/:import_id/preview
 
 sources:
   - lib/ixport.rb
@@ -41,3 +44,6 @@ sources:
   - app/controllers/ixport/mappings_controller.rb
   - app/views/ixport/imports/new.html.erb
   - app/views/ixport/mappings/show.html.erb
+  - app/models/ixport/row_walk.rb
+  - app/controllers/ixport/previews_controller.rb
+  - app/views/ixport/previews/show.html.erb
