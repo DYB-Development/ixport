@@ -14,7 +14,7 @@ module Ixport
     end
 
     def show
-      redirect_to import_preview_path(@import) unless @import.finished? || @import.running?
+      redirect_to import_preview_path(@import) if @import.status == "pending"
     end
 
     def create

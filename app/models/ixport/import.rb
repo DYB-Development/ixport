@@ -28,6 +28,10 @@ module Ixport
       status == "running"
     end
 
+    def failed?
+      status == "failed"
+    end
+
     def step
       return :result if finished?
 
