@@ -80,7 +80,10 @@ module Ixport
     end
 
     def incoming_file_is_usable
-      rows = CSV.parse(incoming_file_contents)
+      text = incoming_file_contents
+      return errors.add(:file, "This file is not UTF-8 text. Save it as UTF-8 and upload it again.") unless text.valid_encoding?
+
+      rows = CSV.parse(text)
       return errors.add(:file, "This file has no header row.") if rows.first.blank?
 
       check_inline_row_limit(rows.size - 1) unless Ixport.configuration.background_runner

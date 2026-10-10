@@ -80,4 +80,10 @@ class UploadTest < ActionDispatch::IntegrationTest
 
     assert_select "[data-upload-error]", text: "This file could not be read past line 2. Check the quotes on that line."
   end
+
+  test "a file that is not UTF-8 is refused with a message saying so" do
+    post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("latin1.csv", "text/csv") }
+
+    assert_select "[data-upload-error]", text: "This file is not UTF-8 text. Save it as UTF-8 and upload it again."
+  end
 end
