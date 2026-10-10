@@ -38,6 +38,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "t.json :mapping"
   end
 
+  test "the migration records whether an import has run" do
+    assert_includes migration, "t.string :status, null: false, default: \"pending\""
+  end
+
   private
 
   def migration
