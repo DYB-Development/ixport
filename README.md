@@ -87,6 +87,8 @@ The import's result page then shows how many rows were added and how many update
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
 
+The engine's root page also lists the person's imports in the current account, newest first. Each shows its title, file name, status and date, and its added, updated and refused counts once it has run. Each opens the page for the step the import has reached: its mapping, its preview, or its result.
+
 ## Fixed exports
 
 A fixed export is a CSV download whose columns the app chooses. Register each one in an initializer with its key, its title and the name of its exporter class:
