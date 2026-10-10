@@ -20,4 +20,12 @@ class ImportListTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "Products", "Customers" ], css_select("[data-import]").map { |entry| entry.text.strip }
   end
+
+  test "each registered import links to its upload page" do
+    Ixport.register_import(:products, title: "Products", importer: "ProductImporter")
+
+    get "/data_imports"
+
+    assert_select "[data-import] a[href='/data_imports/imports/new?key=products']", text: "Products"
+  end
 end
