@@ -4,7 +4,17 @@
     <%= ui_alert(message: "No exports are set up yet.") %>
   <% else %>
     <% @registrations.each do |registration| %>
-      <div data-export><%= link_to registration.title, export_path(registration.key) %></div>
+      <% if registration.chosen %>
+        <div data-export><%= registration.title %></div>
+        <ul>
+          <% Array(@templates[registration.key.to_s]).each do |template| %>
+            <li data-export-template><%= link_to template.name, export_template_path(template) %></li>
+          <% end %>
+        </ul>
+        <%= ui_button(label: "New template", href: new_export_template_path(registration.key), variant: :secondary, size: :sm) %>
+      <% else %>
+        <div data-export><%= link_to registration.title, export_path(registration.key) %></div>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>

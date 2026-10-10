@@ -79,4 +79,13 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "every member of the account sees the account's templates on the exports page, and no other account's" do
+    Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "sku" ], person: User.create!(name: "Teammate"), account: @account)
+    Ixport::ExportTemplate.create!(key: "products", name: "South prices", columns: [ "sku" ], person: @person, account: Account.create!(name: "South"))
+
+    get "/data_imports/exports"
+
+    assert_equal [ "Prices" ], css_select("[data-export-template]").map { |template| template.text.strip }
+  end
 end
