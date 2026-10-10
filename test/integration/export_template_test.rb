@@ -71,4 +71,12 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_equal "SKU\nA1\n", response.body
   end
+
+  test "a template of another account answers not found" do
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "sku" ], person: @person, account: Account.create!(name: "South"))
+
+    get "/data_imports/export_templates/#{template.id}"
+
+    assert_response :not_found
+  end
 end
