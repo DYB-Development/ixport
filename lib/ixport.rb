@@ -3,6 +3,7 @@ require "ixport/version"
 require "ixport/configuration"
 require "ixport/registrations"
 require "ixport/importer"
+require "ixport/exporter"
 require "ixport/engine"
 
 module Ixport
