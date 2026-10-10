@@ -33,4 +33,10 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "Customers" ], css_select("[data-import]").map { |entry| entry.text.strip }
   end
+
+  test "a person the rule refuses gets not found for that import's upload" do
+    get "/data_imports/imports/new", params: { key: "products" }
+
+    assert_response :not_found
+  end
 end

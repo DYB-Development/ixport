@@ -31,7 +31,7 @@ module Ixport
 
     def find_registration
       @registration = Ixport.registrations[params[:key].to_s.to_sym]
-      head :not_found unless @registration
+      head :not_found unless @registration && allowed?(@registration)
     end
   end
 end
