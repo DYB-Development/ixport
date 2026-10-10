@@ -60,6 +60,17 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "A1", 999 ], [ "B2", 200 ] ], @account.products.order(:sku).pluck(:sku, :price_cents)
   end
 
+  test "returning to the result page later shows the same counts and refused rows" do
+    post "/data_imports/imports/#{@import.id}/run"
+    reset!
+    ApplicationController.signed_in_user = @person
+    ApplicationController.signed_in_account = @account
+
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_equal [ { "added" => "1", "updated" => "1" }, [ [ "4", "Price cents is not a number" ] ] ], result_on_page
+  end
+
   private
 
   def result_on_page
