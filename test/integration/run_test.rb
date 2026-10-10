@@ -28,6 +28,8 @@ class RunTest < ActionDispatch::IntegrationTest
     ApplicationController.signed_in_user = nil
     ApplicationController.signed_in_account = nil
     Ixport.reset_registrations!
+    Ixport.reset_configuration!
+    Wallflower.reset_kinds!
   end
 
   test "running the import from the preview saves its rows inside the request" do
@@ -77,7 +79,21 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/data_imports/imports/#{@import.id}/preview"
   end
 
+  test "with wallflower as the runner, running an import starts a wallflower task and opens its page" do
+    use_wallflower
+
+    post "/data_imports/imports/#{@import.id}/run"
+
+    task = Wallflower::Task.last
+    assert_equal [ "ixport_import", { "import_id" => @import.id }, "/background/tasks/#{task.id}" ], [ task.kind, task.params, URI(response.location).path ]
+  end
+
   private
+
+  def use_wallflower
+    Ixport.configure { |config| config.background_runner = :wallflower }
+    Ixport.install_background_runner!
+  end
 
   def result_on_page
     counts = css_select("[data-result-count]").to_h { |count| [ count["data-result-count"], count.text.strip ] }

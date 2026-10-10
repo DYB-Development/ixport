@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 module Ixport
+  def self.background_runner
+    case configuration.background_runner
+    when nil then nil
+    when :wallflower then WallflowerRunner
+    else configuration.background_runner.to_s.constantize
+    end
+  end
+
   def self.install_background_runner!
     return unless configuration.background_runner == :wallflower
 
