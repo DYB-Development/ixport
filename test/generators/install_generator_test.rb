@@ -30,6 +30,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "t.references :account, polymorphic: true, null: true"
   end
 
+  test "the migration records which registered import each import is for" do
+    assert_includes migration, "t.string :key, null: false"
+  end
+
   private
 
   def migration
