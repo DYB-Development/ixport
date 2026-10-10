@@ -8,6 +8,7 @@ module Ixport
       import = Import.find(task.params["import_id"])
       Ixport.run_import(import, reporter: task)
       task.link_result(ixport.import_path(import))
+      raise ImportFailed, import.error_message if import.failed?
     end
   end
 end

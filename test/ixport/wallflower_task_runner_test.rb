@@ -46,4 +46,12 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal @import.refusals.map { |refusal| [ "Row #{refusal.row_number}", refusal.reason ] }, @task.reload.refusals.map { |refusal| [ refusal.label, refusal.reason ] }
   end
+
+  test "when the import fails, its wallflower task fails with the same message and still links to the import's page" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_equal [ "failed", "Disk full", "/data_imports/imports/#{@import.id}" ], [ @task.reload.status, @task.error_message, @task.result_url ]
+  end
 end

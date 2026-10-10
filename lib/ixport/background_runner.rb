@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Ixport
+  class ImportFailed < StandardError; end
+
   def self.background_runner
     case configuration.background_runner
     when nil then nil
