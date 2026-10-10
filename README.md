@@ -48,26 +48,29 @@ An app whose registered importer class does not exist fails to boot, with a mess
 
 The engine's root page lists every registered import by its title, each linking to its upload page.
 
-An importer lists the fields a person maps the file's columns to, each with the label the person sees, and says which existing record a row matches:
+An importer lists the fields a person maps the file's columns to, each with the label the person sees. It names the one field rows are matched on, and the records a row may match, which it reaches through the `person` and `account` the import is for:
 
 ```ruby
 class ProductImporter < Ixport::Importer
   field :sku, label: "SKU"
   field :price_cents, label: "Price"
+  match_on :sku
 
-  def find_existing(row)
-    Product.find_by(sku: row[:sku])
+  def records
+    account.products
   end
 end
 ```
 
-A row whose `find_existing` returns a record is matched to that record, and a row that matches nothing is new. An importer that does not define `find_existing` treats every row as new.
+Each field's key is the record's attribute name. ixport looks up every match value in the file with one query against `records`. A row whose match value matches one of those records updates it, and a row that matches nothing adds a new record built from `records`. A row whose match value is blank, or whose file has no column mapped to the match field, always adds a record.
 
 ## Uploading and mapping a file
 
 From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file has no header row or has more rows than `config.inline_row_limit`.
 
 After uploading, the person matches each column of the file's header row to one of the importer's fields, by its label, or skips it. Saving the mapping moves them on to the preview.
+
+The preview shows how many rows will add a record, update one or be refused, before anything is saved. It lists each row that will update a record and each refused row, by its row number in the file, with the reason the record gives for a refusal. A row is refused when the record it builds is not valid. Viewing the preview saves nothing, and the person can go back from it to change the mapping.
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
 
