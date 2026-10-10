@@ -4,7 +4,7 @@ CSV import and export for Rails apps. An app registers the kinds of CSV a person
 
 ## Installation
 
-Add the gem and run its install generator, which copies the migration for its imports table:
+Add the gem and run its install generator, which copies the migrations for its imports table and the table of rows an import refused:
 
 ```ruby
 gem "ixport"
@@ -71,6 +71,12 @@ From the engine's root page, a person picks a registered import and uploads a CS
 After uploading, the person matches each column of the file's header row to one of the importer's fields, by its label, or skips it. Saving the mapping moves them on to the preview.
 
 The preview shows how many rows will add a record, update one or be refused, before anything is saved. It lists each row that will update a record and each refused row, by its row number in the file, with the reason the record gives for a refusal. A row is refused when the record it builds is not valid. Viewing the preview saves nothing, and the person can go back from it to change the mapping.
+
+## Running an import
+
+The person runs the import from the preview, and it runs inside the request. Each row that passes the record's validations is saved, updating the record it matches or adding a new one. Each row that fails them is refused and kept with its row number and reason, and the record it matched is left unchanged.
+
+The import's result page then shows how many rows were added and how many updated, and lists each refused row. It shows the same thing on every later visit. A finished import offers no Run button, its preview leads to its result page, and running it again adds or changes nothing.
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
 

@@ -29,4 +29,7 @@
       </ul>
     <% end %>
   <% end %>
+  <%= ui_form(action: import_run_path(@import)) do %>
+    <%= ui_button(label: "Run import") %>
+  <% end %>
 <% end %>

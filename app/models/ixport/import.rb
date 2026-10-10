@@ -10,9 +10,20 @@ module Ixport
     belongs_to :account, polymorphic: true, optional: true
 
     has_one_attached :file
+    has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
     validate :file_has_header_row, on: :create
     validate :file_within_inline_row_limit, on: :create
+
+    def run!(importer)
+      with_lock do
+        walk_and_save(importer) unless finished?
+      end
+    end
+
+    def finished?
+      status == "finished"
+    end
 
     def importer_class
       Ixport.registration(key).importer.constantize
@@ -23,6 +34,18 @@ module Ixport
     end
 
     private
+
+    def walk_and_save(importer)
+      rows = RowWalk.new(self, importer).rows
+      rows.each do |row|
+        if row.outcome == :refused
+          refusals.create!(row_number: row.number, reason: row.reason)
+        else
+          row.record.save!
+        end
+      end
+      update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
+    end
 
     def file_has_header_row
       errors.add(:file, "This file has no header row.") if CSV.parse_line(incoming_file_contents).blank?

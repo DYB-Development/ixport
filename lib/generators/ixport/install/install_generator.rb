@@ -12,8 +12,9 @@ module Ixport
 
       desc "Installs Ixport: copies the migrations for its tables."
 
-      def copy_migration
+      def copy_migrations
         migration_template "create_ixport_imports.rb.erb", "db/migrate/create_ixport_imports.rb"
+        migration_template "create_ixport_import_refusals.rb.erb", "db/migrate/create_ixport_import_refusals.rb"
       end
     end
   end

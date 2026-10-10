@@ -1,6 +1,6 @@
 ---
 name: ixport-install
-description: Use to hook ixport into a project — adding the gem, checking Active Storage is set up, running the install generator and its migration, mounting the engine, and configuring the sign-in check, the current person method, the current account method, the layout and the inline row limit.
+description: Use to hook ixport into a project — adding the gem, checking Active Storage is set up, running the install generator and its migrations, mounting the engine, and configuring the sign-in check, the current person method, the current account method, the layout and the inline row limit.
 tools: Bash, Read, Edit
 scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports the host app registers, each backed by an importer class the host writes
 ---
@@ -9,12 +9,12 @@ This local hooks ixport into a Rails app by following the steps below exactly. I
 
 ## What ixport is
 
-ixport is a Rails engine that lets a signed-in person upload a CSV file, match its columns to a host app's fields, and preview which rows would add, update or be refused, without writing any record yet. Hook it in when a Rails app needs people to load data from spreadsheets.
+ixport is a Rails engine that lets a signed-in person upload a CSV file, match its columns to a host app's fields, preview which rows will add, update or be refused, and then run the import to save those records into the host app. Hook it in when a Rails app needs people to load data from spreadsheets.
 
 ## Interface
 
 - `gem "ixport"` — the Gemfile line that adds ixport to the app. It also brings in Keystone UI, which draws ixport's pages.
-- `bin/rails generate ixport:install` — copies one migration into `db/migrate/` that creates the `ixport_imports` table.
+- `bin/rails generate ixport:install` — copies two migrations into `db/migrate/`, one that creates the `ixport_imports` table and one that creates the `ixport_import_refusals` table.
 - `mount Ixport::Engine` — the line in `config/routes.rb` that serves ixport's pages under a path the app chooses.
 - `Ixport.configure` — takes a block that receives the configuration object, where the app sets any of the five settings below.
 - `config.authentication_method` — the name of the controller method run before every ixport page, as a symbol. It defaults to `:authenticate_user!`.
@@ -41,8 +41,10 @@ ixport is a Rails engine that lets a signed-in person upload a CSV file, match i
    ```bash
    bin/rails generate ixport:install
    ```
-   It writes `db/migrate/<timestamp>_create_ixport_imports.rb`, which creates the `ixport_imports` table with a `key` string, a required polymorphic `person` reference, an optional polymorphic `account` reference, a `mapping` JSON column, and timestamps. It touches no other file.
-5. Run the migration:
+   It writes two files and touches no other:
+   - `db/migrate/<timestamp>_create_ixport_imports.rb` creates the `ixport_imports` table with a required `key` string, a required polymorphic `person` reference, an optional polymorphic `account` reference, a `mapping` JSON column, a required `status` string defaulting to `"pending"`, required `added_count` and `updated_count` integers defaulting to `0`, and timestamps.
+   - `db/migrate/<timestamp>_create_ixport_import_refusals.rb` creates the `ixport_import_refusals` table with a required `import` reference with a foreign key to `ixport_imports`, a required `row_number` integer, a required `reason` text, and timestamps.
+5. Run the migrations:
    ```bash
    bin/rails db:migrate
    ```
@@ -73,8 +75,8 @@ ixport is a Rails engine that lets a signed-in person upload a CSV file, match i
 
 ## Conventions
 
-- After installing, check that `bin/rails db:migrate:status` lists the create-ixport-imports migration as up, that `bin/rails routes` lists the mount path, and that the page at that path loads as described in step 10.
-- Run the install generator once. A second run stops with an error naming the migration the app already has, and adds nothing. Do not delete or edit the copied migration once it has been run.
+- After installing, check that `bin/rails db:migrate:status` lists both the create-ixport-imports and the create-ixport-import-refusals migrations as up, that `bin/rails routes` lists the mount path, and that the page at that path loads as described in step 10.
+- Run the install generator once. A second run against unchanged copies reports each migration as identical and adds nothing. If a copied migration differs from the one the generator would write, the run stops with an error naming that migration, and copies nothing after it. Do not delete or edit a copied migration once it has been run.
 - When the app renames its sign-in method, its current person or account method, or the layout ixport uses, update the matching line in `config/initializers/ixport.rb` in the same change.
 - A setting given the same value as its default is left out of the initializer. Remove a line when its value goes back to the default.
-- Setting up the imports that appear on the page, and the upload, mapping and preview pages they lead to, is out of scope for this local and belongs to `ixport-develop`.
+- Setting up the imports that appear on the page, and the upload, mapping, preview, run and result pages they lead to, is out of scope for this local and belongs to `ixport-develop`.

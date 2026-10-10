@@ -59,4 +59,10 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_select "a[href='/data_imports/imports/#{@import.id}/mapping']"
   end
+
+  test "the preview offers a Run import button" do
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_select "form[action='/data_imports/imports/#{@import.id}/run'] button[type=submit]", text: "Run import"
+  end
 end
