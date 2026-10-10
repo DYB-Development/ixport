@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 - An update generator, `ixport:update`, copies the migrations added since an app installed ixport.
 - The engine's root lists the person's imports in the current account, newest first, each opening at the step it has reached.
 - `config.background_runner` runs every import through wallflower or the app's own runner, with no inline row limit. A wallflower task shows the import's progress, changes and refusals and links to its result page. An app's own runner is handed each import with `enqueue` and runs it with `Ixport.run_import`. `ixport:update` copies the migration linking an import to its wallflower task.
+- An upload is refused with a message when the file is not UTF-8 or its quoting is broken, naming the line where reading stopped, and a byte order mark is ignored.
+- An import whose run raises is marked failed, keeps the rows saved before the error, shows the error and how far it got, and reports it through `Rails.error`. `ixport:update` copies the migration that stores the error.
 
 ## [0.1.0] - 2026-10-10
 

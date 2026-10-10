@@ -67,4 +67,12 @@ class MappingTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "a file saved with a byte order mark shows its first column by its name, without the mark" do
+    import = Ixport::Import.create!(key: "products", person: @person, file: { io: StringIO.new("\uFEFFSKU,Price\nA1,100\n"), filename: "excel.csv" })
+
+    get "/data_imports/imports/#{import.id}/mapping"
+
+    assert_equal [ "SKU", "Price" ], css_select("[data-column] [data-column-name]").map { |name| name.text.strip }
+  end
 end

@@ -62,6 +62,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_equal 1, Dir.glob("#{destination}/db/migrate/*_add_wallflower_task_to_ixport_imports.rb").size
   end
 
+  test "copies a migration that keeps the error a failed import stopped on" do
+    assert_equal 1, Dir.glob("#{destination}/db/migrate/*_add_error_message_to_ixport_imports.rb").size
+  end
+
   private
 
   def refusals_migration

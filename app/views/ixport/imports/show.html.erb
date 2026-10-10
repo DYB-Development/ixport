@@ -1,10 +1,20 @@
-<% heading = @import.running? ? "Import running" : "Import finished" %>
+<% heading = if @import.running?
+                "Import running"
+              elsif @import.failed?
+                "Import failed"
+              else
+                "Import finished"
+              end %>
 <%= ui_show_page(title: heading, back_url: root_path) %>
 <%= ui_page(max_width: :md) do %>
   <%= ui_page_header(title: heading) %>
   <% if @import.running? %>
     <%= ui_alert(type: :info, message: tag.span("This import is running.", data: { import_running: true })) %>
   <% else %>
+    <% if @import.failed? %>
+      <%= ui_alert(type: :error, message: tag.span(@import.error_message, data: { import_error: true })) %>
+      <p>Rows saved before it stopped stay saved.</p>
+    <% end %>
     <%= ui_grid(cols: { default: 1, sm: 2 }) do %>
       <%= ui_stat_card(label: "Added", value: tag.span(@import.added_count, data: { result_count: "added" })) %>
       <%= ui_stat_card(label: "Updated", value: tag.span(@import.updated_count, data: { result_count: "updated" })) %>

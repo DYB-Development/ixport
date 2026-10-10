@@ -12,12 +12,11 @@ module Ixport
     has_one_attached :file
     has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
-    validate :file_has_header_row, on: :create
-    validate :file_within_inline_row_limit, on: :create, unless: -> { Ixport.configuration.background_runner }
+    validate :incoming_file_is_usable, on: :create
 
     def run!(reporter: NullReporter.new)
       with_lock do
-        walk_and_save(reporter) unless finished?
+        walk_and_save(reporter) if status.in?(%w[pending running])
       end
     end
 
@@ -27,6 +26,10 @@ module Ixport
 
     def running?
       status == "running"
+    end
+
+    def failed?
+      status == "failed"
     end
 
     def step
@@ -52,34 +55,58 @@ module Ixport
     end
 
     def headers
-      CSV.parse_line(file.download) || []
+      CSV.parse_line(contents) || []
+    end
+
+    def contents
+      self.class.readable(file.download)
+    end
+
+    def self.readable(text)
+      text.to_s.dup.force_encoding(Encoding::UTF_8).delete_prefix("\uFEFF")
     end
 
     private
 
     def walk_and_save(reporter)
+      counts = { add: 0, update: 0 }
       rows = self.rows
       reporter.set_total(rows.size)
       rows.each do |row|
-        if row.outcome == :refused
-          refusals.create!(row_number: row.number, reason: row.reason)
-          reporter.refuse(label: "Row #{row.number}", reason: row.reason)
-        else
-          row.record.save!
-        end
+        save_row(row, reporter)
+        counts[row.outcome] += 1 if counts.key?(row.outcome)
         reporter.advance
       end
-      update!(status: "finished", added_count: rows.count { |row| row.outcome == :add }, updated_count: rows.count { |row| row.outcome == :update })
+      update!(status: "finished", added_count: counts[:add], updated_count: counts[:update])
+    rescue StandardError => error
+      Rails.error.report(error)
+      update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
     end
 
-    def file_has_header_row
-      errors.add(:file, "This file has no header row.") if CSV.parse_line(incoming_file_contents).blank?
+    def save_row(row, reporter)
+      if row.outcome == :refused
+        refusals.create!(row_number: row.number, reason: row.reason)
+        reporter.refuse(label: "Row #{row.number}", reason: row.reason)
+      else
+        self.class.transaction(requires_new: true) { row.record.save! }
+      end
     end
 
-    def file_within_inline_row_limit
+    def incoming_file_is_usable
+      text = incoming_file_contents
+      return errors.add(:file, "This file is not UTF-8 text. Save it as UTF-8 and upload it again.") unless text.valid_encoding?
+
+      rows = CSV.parse(text)
+      return errors.add(:file, "This file has no header row.") if rows.first.blank?
+
+      check_inline_row_limit(rows.size - 1) unless Ixport.configuration.background_runner
+    rescue CSV::MalformedCSVError => error
+      errors.add(:file, "This file could not be read past line #{error.line_number}. Check the quotes on that line.")
+    end
+
+    def check_inline_row_limit(row_count)
       limit = Ixport.configuration.inline_row_limit
-      rows = [ CSV.parse(incoming_file_contents).size - 1, 0 ].max
-      errors.add(:file, "This file has #{rows} rows, and the most an import can have is #{limit}.") if rows > limit
+      errors.add(:file, "This file has #{row_count} rows, and the most an import can have is #{limit}.") if row_count > limit
     end
 
     def incoming_file_contents
@@ -87,7 +114,7 @@ module Ixport
       io = attachable.is_a?(Hash) ? attachable[:io] : attachable
       return "" unless io
 
-      io.read.tap { io.rewind }.to_s
+      self.class.readable(io.read.tap { io.rewind })
     end
   end
 end

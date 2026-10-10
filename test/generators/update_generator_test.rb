@@ -31,6 +31,12 @@ class Ixport::Generators::UpdateGeneratorTest < ActiveSupport::TestCase
     assert_equal 1, migrations_named("add_wallflower_task_to_ixport_imports").size
   end
 
+  test "adds the error a failed import stopped on to an app that installed earlier" do
+    update
+
+    assert_equal 1, migrations_named("add_error_message_to_ixport_imports").size
+  end
+
   private
 
   def update

@@ -5,7 +5,7 @@ module Ixport
     before_action :find_import
 
     def show
-      return redirect_to import_path(@import) if @import.finished? || @import.running?
+      return redirect_to import_path(@import) unless @import.status == "pending"
 
       rows = @import.rows
       @counts = { add: 0, update: 0, refused: 0 }.merge(rows.group_by(&:outcome).transform_values(&:size))

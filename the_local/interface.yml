@@ -23,6 +23,7 @@ develop:
   - account
   - Ixport::MissingImporter
   - Ixport::MissingExporter
+  - Ixport::ImportFailed
   - Ixport.run_import
   - enqueue
   - GET /
@@ -86,3 +87,4 @@ sources:
   - app/models/ixport/wallflower_task_runner.rb
   - app/models/ixport/null_reporter.rb
   - lib/generators/ixport/install/templates/add_wallflower_task_to_ixport_imports.rb.erb
+  - lib/generators/ixport/install/templates/add_error_message_to_ixport_imports.rb.erb

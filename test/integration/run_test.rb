@@ -149,6 +149,15 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/data_imports/imports/#{@import.id}"
   end
 
+  test "a failed import's page shows the error and how many rows were added and updated before it stopped" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nA1,150\nB2,200\nRAISE,1\n"), filename: "products.csv" })
+
+    post "/data_imports/imports/#{@import.id}/run"
+    follow_redirect!
+
+    assert_equal [ "Disk full", { "added" => "1", "updated" => "1" } ], [ css_select("[data-import-error]").first&.text&.strip, result_on_page.first ]
+  end
+
   private
 
   def use_wallflower
