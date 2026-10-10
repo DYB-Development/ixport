@@ -19,13 +19,5 @@ module Ixport
     def self.match_field
       @match_field
     end
-
-    def new_row?(row)
-      find_existing(row).nil?
-    end
-
-    def find_existing(_row)
-      nil
-    end
   end
 end
