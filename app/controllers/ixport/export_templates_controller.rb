@@ -4,6 +4,10 @@ module Ixport
   class ExportTemplatesController < ApplicationController
     before_action :find_chosen_export
 
+    def new
+      @columns = @registration.exporter.constantize.columns
+    end
+
     def create
       ExportTemplate.create!(key: @registration.key, name: params[:name], columns: picked_columns, person: ixport_person, account: ixport_account)
       redirect_to exports_path

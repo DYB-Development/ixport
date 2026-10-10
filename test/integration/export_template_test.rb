@@ -46,4 +46,11 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "the new template page offers one column choice per position, each listing the exporter's columns by label" do
+    get "/data_imports/exports/products/templates/new"
+
+    choices = [ "None", "SKU", "Price", "Account" ]
+    assert_equal [ choices, choices, choices ], css_select("form select[name='columns[]']").map { |select| select.css("option").map { |option| option.text.strip } }
+  end
 end
