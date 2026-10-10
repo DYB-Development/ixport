@@ -35,4 +35,10 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_equal({ "add" => "2", "update" => "1", "refused" => "1" }, css_select("[data-count]").to_h { |count| [ count["data-count"], count.text.strip ] })
   end
+
+  test "lists each row that will update a record, with its row number in the file" do
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_equal [ "2" ], css_select("[data-update-row] [data-row-number]").map { |number| number.text.strip }
+  end
 end
