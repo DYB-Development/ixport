@@ -6,7 +6,7 @@ module Ixport
 
     def create
       @import.run!(@import.importer_class.new(person: ixport_person, account: ixport_account))
-      head :no_content
+      redirect_to import_path(@import)
     end
   end
 end

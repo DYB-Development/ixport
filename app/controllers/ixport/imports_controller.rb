@@ -3,12 +3,16 @@
 module Ixport
   class ImportsController < ApplicationController
     before_action :find_registration, only: %i[new create]
+    before_action :find_import, only: :show
 
     def index
       @registrations = Ixport.registrations.values
     end
 
     def new
+    end
+
+    def show
     end
 
     def create
