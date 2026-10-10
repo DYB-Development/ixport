@@ -17,7 +17,7 @@ module Ixport
     private
 
     def run_in_request
-      @import.run!(@import.importer_class.new(person: ixport_person, account: ixport_account))
+      @import.run!
       redirect_to import_path(@import)
     end
   end
