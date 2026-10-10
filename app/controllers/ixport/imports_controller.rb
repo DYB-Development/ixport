@@ -11,8 +11,14 @@ module Ixport
     end
 
     def create
-      import = Import.create!(key: params[:key], person: ixport_person, account: ixport_account, file: params[:file])
-      redirect_to import_mapping_path(import)
+      import = Import.new(key: params[:key], person: ixport_person, account: ixport_account, file: params[:file])
+      if import.save
+        redirect_to import_mapping_path(import)
+      else
+        @registration = Ixport.registration(params[:key])
+        @error = import.errors[:file].first
+        render :new, status: :unprocessable_entity
+      end
     end
   end
 end

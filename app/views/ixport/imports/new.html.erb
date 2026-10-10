@@ -1,5 +1,8 @@
 <%= ui_form_page(title: @registration.title, back_url: root_path) %>
 <%= ui_page(max_width: :md) do %>
+  <% if @error.present? %>
+    <%= ui_alert(type: :error, message: tag.span(@error, data: { upload_error: true })) %>
+  <% end %>
   <%= ui_form(action: imports_path, multipart: true) do %>
     <%= hidden_field_tag "key", @registration.key %>
     <%= ui_file_upload(name: "file", label: "CSV file", accept: ".csv") %>
