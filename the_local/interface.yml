@@ -1,0 +1,34 @@
+scope: CSV import and export — a mounted engine where a signed-in person sees the mapped imports the host app registers, each backed by an importer class the host writes
+
+install:
+  - gem "ixport"
+  - bin/rails generate ixport:install
+  - mount Ixport::Engine
+  - Ixport.configure
+  - config.authentication_method
+  - config.current_person_method
+  - config.current_account_method
+  - config.layout
+  - config.inline_row_limit
+
+develop:
+  - Ixport.register_import
+  - Ixport::Importer
+  - field
+  - find_existing
+  - new_row?
+  - Ixport::MissingImporter
+  - GET /
+
+sources:
+  - lib/ixport.rb
+  - lib/ixport/engine.rb
+  - lib/ixport/configuration.rb
+  - lib/ixport/registrations.rb
+  - lib/ixport/importer.rb
+  - lib/generators/ixport/install/install_generator.rb
+  - lib/generators/ixport/install/templates/create_ixport_imports.rb.erb
+  - config/routes.rb
+  - app/controllers/ixport/application_controller.rb
+  - app/controllers/ixport/imports_controller.rb
+  - app/views/ixport/imports/index.html.erb
