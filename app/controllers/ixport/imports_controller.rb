@@ -6,7 +6,7 @@ module Ixport
     before_action :find_import, only: :show
 
     def index
-      @registrations = Ixport.registrations.values
+      @registrations = Ixport.registrations.values.select { |registration| allowed?(registration) }
       @imports = Import.where(person: ixport_person, account: ixport_account).order(created_at: :desc).with_attached_file.includes(:refusals)
     end
 
