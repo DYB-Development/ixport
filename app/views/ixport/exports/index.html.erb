@@ -1,0 +1,10 @@
+<%= ui_page(max_width: :md) do %>
+  <h1>Exports</h1>
+  <% if @registrations.empty? %>
+    <%= ui_alert(message: "No exports are set up yet.") %>
+  <% else %>
+    <% @registrations.each do |registration| %>
+      <div data-export><%= registration.title %></div>
+    <% end %>
+  <% end %>
+<% end %>
