@@ -51,4 +51,10 @@ class UploadTest < ActionDispatch::IntegrationTest
 
     assert_select "[data-upload-error]", text: "This file has 3 rows, and the most an import can have is 2."
   end
+
+  test "the upload page for a key no import is registered under answers not found" do
+    get "/data_imports/imports/new", params: { key: "invoices" }
+
+    assert_response :not_found
+  end
 end
