@@ -32,4 +32,10 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "Prices", [ "price_cents", "sku" ], @account ], Ixport::ExportTemplate.last.then { |template| [ template.name, template.columns, template.account ] }
   end
+
+  test "a template keeps only columns the exporter lists" do
+    post "/data_imports/exports/products/templates", params: { name: "Prices", columns: [ "price_cents", "password_digest" ] }
+
+    assert_equal [ "price_cents" ], Ixport::ExportTemplate.last.columns
+  end
 end
