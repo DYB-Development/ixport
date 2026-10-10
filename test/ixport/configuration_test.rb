@@ -22,4 +22,16 @@ class Ixport::ConfigurationTest < ActiveSupport::TestCase
   test "draws pages in the application layout unless the host names another" do
     assert_equal "application", Ixport.configuration.layout
   end
+
+  test "a host sets the sign-in check, the person and account methods and the layout in a configure block" do
+    Ixport.configure do |config|
+      config.authentication_method = :require_staff!
+      config.current_person_method = :current_member
+      config.current_account_method = :current_team
+      config.layout = "back_office"
+    end
+
+    assert_equal [ :require_staff!, :current_member, :current_team, "back_office" ],
+                 Ixport.configuration.then { |c| [ c.authentication_method, c.current_person_method, c.current_account_method, c.layout ] }
+  end
 end
