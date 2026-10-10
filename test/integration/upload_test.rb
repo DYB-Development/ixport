@@ -57,4 +57,10 @@ class UploadTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "an upload for a key no import is registered under answers not found" do
+    post "/data_imports/imports", params: { key: "invoices", file: fixture_file_upload("products.csv", "text/csv") }
+
+    assert_response :not_found
+  end
 end
