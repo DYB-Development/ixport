@@ -4,6 +4,13 @@ module Ixport
   class Importer
     Field = Struct.new(:key, :label, keyword_init: true)
 
+    attr_reader :person, :account
+
+    def initialize(person:, account:)
+      @person = person
+      @account = account
+    end
+
     def self.field(key, label:)
       fields << Field.new(key: key.to_sym, label: label)
     end

@@ -16,4 +16,11 @@ class Ixport::ImporterTest < ActiveSupport::TestCase
   test "an importer declares the one field rows are matched on" do
     assert_equal :sku, ProductImporter.match_field
   end
+
+  test "an importer knows the person and account an import is for" do
+    person = User.create!(name: "Rep")
+    account = Account.create!(name: "North")
+
+    assert_equal [ person, account ], ProductImporter.new(person: person, account: account).then { |importer| [ importer.person, importer.account ] }
+  end
 end
