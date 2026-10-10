@@ -30,4 +30,10 @@ class UploadTest < ActionDispatch::IntegrationTest
 
     assert Ixport::Import.find_by(person: @person, key: "products").file.attached?
   end
+
+  test "after uploading, the person is taken to map the file's columns" do
+    post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("products.csv", "text/csv") }
+
+    assert_redirected_to "/data_imports/imports/#{Ixport::Import.last.id}/mapping"
+  end
 end

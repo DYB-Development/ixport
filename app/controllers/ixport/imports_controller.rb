@@ -11,8 +11,8 @@ module Ixport
     end
 
     def create
-      Import.create!(key: params[:key], person: ixport_person, account: ixport_account, file: params[:file])
-      head :created
+      import = Import.create!(key: params[:key], person: ixport_person, account: ixport_account, file: params[:file])
+      redirect_to import_mapping_path(import)
     end
   end
 end
