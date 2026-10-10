@@ -18,4 +18,8 @@ class Ixport::ConfigurationTest < ActiveSupport::TestCase
   test "finds the current account through current_account unless the host names another method" do
     assert_equal :current_account, Ixport.configuration.current_account_method
   end
+
+  test "draws pages in the application layout unless the host names another" do
+    assert_equal "application", Ixport.configuration.layout
+  end
 end
