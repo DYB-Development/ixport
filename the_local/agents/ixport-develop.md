@@ -28,7 +28,7 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
 - `PATCH /imports/:import_id/mapping` — saves which field each column maps to and redirects to the import's preview page.
 - `GET /imports/:import_id/preview` — the preview page, titled "Preview", which shows how many rows will add a record, update one or be refused, lists each updating row and each refused row by its row number, saves nothing, and offers a "Run import" button, and which redirects to the import's result page once the import has run.
 - `POST /imports/:import_id/run` — saves every row that adds or updates a record, records every refused row with its reason, marks the import finished, and redirects to the import's result page, and does nothing but redirect when the import has already run.
-- `GET /imports/:id` — the result page, titled "Import finished", which shows how many rows the run added and updated and lists each refused row by its row number with its reason.
+- `GET /imports/:id` — the result page, titled "Import finished", which shows how many rows the run added and updated and lists each refused row by its row number with its reason, and which redirects to the import's preview page when the import has not run.
 
 ## How to use it
 
@@ -87,7 +87,7 @@ ixport is a Rails engine that lets a signed-in person import a host app's record
     - Every refused row is recorded with its row number and reason, and no record is saved for it.
     - The whole run happens in one database transaction. When any save raises, such as on a database constraint the record's validations do not cover, nothing from the run is saved and the import stays unrun. Tell the developer to cover every database constraint on the record with a validation, so a bad row is refused rather than stopping the whole run.
     - An import runs once. A second run request for the same import, including one sent at the same time as the first, adds and changes nothing and redirects to the result page.
-18. After the run, the person is on the "Import finished" page. It shows two counts, "Added" and "Updated", and, when any row was refused, lists each refused row under "Refused" by its row number with its reason. Returning to this page later shows the same counts and refused rows. The page does not check whether the import has run, so visiting it for an import that has not run shows both counts as 0. Once an import has run, its preview page redirects to this page, so it offers no "Run import" button.
+18. After the run, the person is on the "Import finished" page. It shows two counts, "Added" and "Updated", and, when any row was refused, lists each refused row under "Refused" by its row number with its reason. Returning to this page later shows the same counts and refused rows. Visiting this page for an import that has not run redirects to its preview page. Once an import has run, its preview page redirects to this page, so it offers no "Run import" button.
 19. An import's column-matching, preview, run and result pages are visible only to the person who uploaded it, in the account it was uploaded in. Anyone else, and the same person in another account, gets a not found response.
 
 ## Conventions

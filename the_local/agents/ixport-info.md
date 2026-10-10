@@ -13,7 +13,7 @@ ixport is a Rails engine for loading a host app's records from CSV files. The ho
 
 A person picks an import, uploads a CSV file, matches each column of the file to one of the columns the import reads or skips it, and then sees a preview. The preview counts how many rows will add a record, how many will update one, and how many will be refused, and lists the rows that will update and the rows that will be refused with the reason for each. Viewing the preview saves nothing in the host app, and a Back link returns to the mapping so the person can change it.
 
-From the preview the person runs the import. The run saves every added and updated record in the host app, records each refused row with its reason, and sends the person to the import's result page, which shows how many rows were added and updated and lists each refused row. The run happens inside the request, an import runs once, and asking to run it again changes nothing. Opening the preview of a finished import sends the person to its result page instead.
+From the preview the person runs the import. The run saves every added and updated record in the host app, records each refused row with its reason, and sends the person to the import's result page, which shows how many rows were added and updated and lists each refused row. The run happens inside the request, an import runs once, and asking to run it again changes nothing. Opening the preview of a finished import sends the person to its result page instead, and opening the result page of an import that has not run sends the person to its preview.
 
 ixport refuses a file with no header row, and a file with more rows than the host's row limit, on the upload page. It has no export yet.
 
