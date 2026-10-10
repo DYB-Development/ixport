@@ -38,4 +38,8 @@ class Ixport::ConfigurationTest < ActiveSupport::TestCase
   test "runs an import of up to a thousand rows inline unless the host sets another limit" do
     assert_equal 1_000, Ixport.configuration.inline_row_limit
   end
+
+  test "ixport's pages inherit the host's ApplicationController unless the host names another" do
+    assert_equal "::ApplicationController", Ixport::Configuration.new.base_controller
+  end
 end

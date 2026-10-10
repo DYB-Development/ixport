@@ -36,18 +36,18 @@ By default every signed-in person can use every import and export. The host can 
 
 The engine owns the screens, the access check, and its own tables of import records, refused rows and export templates, with the uploaded file stored through Active Storage. The host owns what each import and export means: which columns it reads or writes, which column identifies an existing record, and which of the app's records a row is checked against, saved into, or read from. Reach for ixport when a Rails app needs people to load data from spreadsheets or take it out into one, rather than writing a one-off upload or download page per record type.
 
-The engine renders its pages with Keystone UI inside a layout the host chooses, and it runs its access check through a method the host already has.
+The engine renders its pages with Keystone UI inside a layout the host chooses, and it runs its access check through a method the host already has. Its pages inherit from a controller the host names, which is the host's own application controller unless the host names another, so the filters, helpers and error handling the host puts on that controller apply to ixport's pages as well.
 
 ## Interface
 
 ixport declares nothing for this local to document. Its surface is split between the other two locals:
 
-- **ixport-install** owns hooking ixport into a host app: adding the gem, running its install generator, running its update generator to bring an existing install's tables up to date, mounting the engine, and the configuration that names the host's sign-in check, current person, current account, layout, row limit and background runner.
+- **ixport-install** owns hooking ixport into a host app: adding the gem, running its install generator, running its update generator to bring an existing install's tables up to date, mounting the engine, and the configuration that names the host's sign-in check, current person, current account, layout, row limit, background runner and the controller ixport's pages inherit from.
 - **ixport-develop** owns building against ixport: registering a mapped import and the importer class behind it, registering a fixed or chosen export and the exporter class behind it, giving an import or export an access rule, writing the app's own background runner and running an import from it, the error a wallflower task raises when its import fails, the errors raised when a registration names a class that does not exist, and the engine's pages for imports, exports and export templates.
 
 ## How to use it
 
-- The app does not have ixport yet, the app installed ixport before export templates or background runs existed and needs their tables, you are choosing whether imports run inside the request, through wallflower or through the app's own runner, or you are changing how ixport reaches the app's sign-in, people, accounts, layout or row limit: use **ixport-install**.
+- The app does not have ixport yet, the app installed ixport before export templates or background runs existed and needs their tables, you are choosing whether imports run inside the request, through wallflower or through the app's own runner, or you are changing how ixport reaches the app's sign-in, people, accounts, layout or row limit, or which of the app's controllers its pages inherit from: use **ixport-install**.
 - ixport is already installed and you are adding or changing an import or an export, making an export chosen or fixed, changing how an import's rows are matched, checked or saved, changing which records or columns an export holds, limiting an import or export to some people, writing the app's own runner that runs imports in the background, linking to the engine's pages, or the app fails to boot naming a missing importer or exporter: use **ixport-develop**.
 
 ## Conventions
@@ -85,6 +85,7 @@ ixport declares nothing for this local to document. Its surface is split between
 - **Step** — how far an import record has got: mapping when no mapping is saved, preview once one is, and result once it is running, finished or failed.
 - **Result page** — the import's own page, showing the added and updated counts and each refused row as they were stored by the run, and the error's message when the run failed, so it shows the same thing each time it is opened.
 - **Person** — whoever is signed in and running the import or downloading the export. ixport reaches them through a method the host names, so the host's user model needs no particular name.
+- **Parent controller** — the host app's controller that every ixport page inherits from, the app's application controller by default. Whatever it adds to every request, such as a filter, a helper or a rescue, runs on ixport's pages too, and the sign-in check, current person and current account methods ixport calls are looked up on it.
 - **Account** — the optional owner the person is working inside, such as a team or company, reached the same way. An app with no accounts runs without one. Both the importer and the exporter are given the person and the account.
 - **Ownership** — an import record belongs to the person and account that uploaded it, and anyone else who opens it, including the same person from another account, is answered not found. An export template belongs to its account, and anyone opening it from another account is answered not found.
 - **Access rule** — an optional check the host gives one import or export when registering it, handed the person and the account and answering whether they may use it. It is checked on top of ownership, so even the person who uploaded an import is answered not found for it once the rule refuses them. An import or export with no rule is open to every signed-in person.

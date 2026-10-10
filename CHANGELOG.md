@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- `config.base_controller` names the controller ixport's pages inherit, so they run that controller's checks.
+
 ## [0.2.0] - 2026-10-10
 
 ### Added

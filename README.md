@@ -41,8 +41,11 @@ Ixport.configure do |config|
   config.layout = "application"                      # the layout ixport's pages are drawn in
   config.inline_row_limit = 1_000                    # the most rows an import may have when it runs inside the request
   config.background_runner = nil                     # :wallflower, or the name of the app's own runner class
+  config.base_controller = "::ApplicationController" # the controller ixport's pages inherit, with its checks and helpers
 end
 ```
+
+`config.base_controller` is read when ixport's controllers load, so set it in an initializer. Name a controller such as an admin area's base controller to give ixport's pages that area's access checks.
 
 ## Mapped imports and importers
 
