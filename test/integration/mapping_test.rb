@@ -43,4 +43,10 @@ class MappingTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to "/data_imports/imports/#{@import.id}/preview"
   end
+
+  test "the mapping page saves through a form with a Save mapping button" do
+    get "/data_imports/imports/#{@import.id}/mapping"
+
+    assert_select "form[action='/data_imports/imports/#{@import.id}/mapping'] button[type=submit]", text: "Save mapping"
+  end
 end
