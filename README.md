@@ -1,6 +1,6 @@
 # ixport
 
-CSV import and export for Rails apps. An app registers the kinds of CSV a person can import and the fields each one maps to.
+CSV import and export for Rails apps. An app registers the kinds of CSV a person can import and the fields each one maps to, and the CSV downloads a person can export.
 
 ## Installation
 
@@ -79,6 +79,30 @@ The person runs the import from the preview, and it runs inside the request. Eac
 The import's result page then shows how many rows were added and how many updated, and lists each refused row. It shows the same thing on every later visit. A finished import offers no Run button, its preview leads to its result page, and running it again adds or changes nothing.
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
+
+## Fixed exports
+
+A fixed export is a CSV download whose columns the app chooses. Register each one in an initializer with its key, its title and the name of its exporter class:
+
+```ruby
+Ixport.register_export :products, title: "Products", exporter: "ProductExporter"
+```
+
+An exporter lists its columns, each with the label that heads it in the CSV. A column can come from a related record by naming the association it comes through. `records` returns the records to export, reached through the `person` and `account` the download is for:
+
+```ruby
+class ProductExporter < Ixport::Exporter
+  column :sku, label: "SKU"
+  column :price_cents, label: "Price"
+  column :name, label: "Category", through: :category
+
+  def records
+    account.products.includes(:category)
+  end
+end
+```
+
+The engine's exports page, at `exports` under the mount path, lists every registered export by its title, each linking to its download. The download's header row is the exporter's column labels in order, followed by one row per record.
 
 ## Claude Code agents
 
