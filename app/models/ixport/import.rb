@@ -25,6 +25,12 @@ module Ixport
       status == "finished"
     end
 
+    def step
+      return :result if finished?
+
+      mapping.present? ? :preview : :mapping
+    end
+
     def title
       Ixport.registration(key).title
     end

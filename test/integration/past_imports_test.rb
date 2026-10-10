@@ -43,6 +43,17 @@ class PastImportsTest < ActionDispatch::IntegrationTest
     assert_equal [ "import-title", "file-name", "status", "made-on" ], entry_fields.keys
   end
 
+  test "each entry opens the page for the step the import has reached" do
+    uploaded = import_named("uploaded.csv", created_at: 3.hours.ago)
+    mapped = import_named("mapped.csv", created_at: 2.hours.ago, mapping: { "0" => "sku" })
+    finished = import_named("finished.csv", created_at: 1.hour.ago, mapping: { "0" => "sku" }, status: "finished")
+
+    get "/data_imports"
+
+    assert_equal [ "/data_imports/imports/#{finished.id}", "/data_imports/imports/#{mapped.id}/preview", "/data_imports/imports/#{uploaded.id}/mapping" ],
+                 css_select("[data-past-import] a[data-step-link]").map { |link| link["href"] }
+  end
+
   private
 
   def entry_fields

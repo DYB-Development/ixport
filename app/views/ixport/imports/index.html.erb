@@ -11,7 +11,7 @@
     <%= ui_section(title: "Your imports") do %>
       <% @imports.each do |import| %>
         <div data-past-import>
-          <span data-import-title><%= import.title %></span>
+          <%= link_to import_step_path(import), data: { step_link: true } do %><span data-import-title><%= import.title %></span><% end %>
           <span data-file-name><%= import.file.filename.to_s %></span>
           <span data-status><%= import.status.capitalize %></span>
           <span data-made-on><%= import.created_at.strftime("%b %-d, %Y") %></span>
