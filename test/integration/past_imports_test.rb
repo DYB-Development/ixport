@@ -35,6 +35,14 @@ class PastImportsTest < ActionDispatch::IntegrationTest
     assert_equal({ "import-title" => "Products", "file-name" => "march.csv", "status" => "Finished", "made-on" => "Mar 4, 2026", "added" => "2", "updated" => "1", "refused" => "1" }, entry_fields)
   end
 
+  test "an entry that has not run shows no counts" do
+    import_named("march.csv")
+
+    get "/data_imports"
+
+    assert_equal [ "import-title", "file-name", "status", "made-on" ], entry_fields.keys
+  end
+
   private
 
   def entry_fields
