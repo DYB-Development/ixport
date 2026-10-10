@@ -81,4 +81,16 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
 
     assert_equal [ [ "Customers" ], 404 ], [ listed, response.status ]
   end
+
+  test "a person the rule refuses gets not found for that chosen export's template pages" do
+    Ixport.register_export(:products, title: "Products", exporter: "AccessRuleTest::ProductExporter", chosen: true, allow: ADMINS_ONLY)
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "sku" ], person: @person, account: @account)
+
+    responses = [ "/data_imports/exports/products/templates/new", "/data_imports/export_templates/#{template.id}", "/data_imports/export_templates/#{template.id}/edit" ].map do |path|
+      get path
+      response.status
+    end
+
+    assert_equal [ 404, 404, 404 ], responses
+  end
 end
