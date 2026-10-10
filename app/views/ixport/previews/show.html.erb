@@ -1,4 +1,4 @@
-<%= ui_show_page(title: "Preview", back_url: root_path) %>
+<%= ui_show_page(title: "Preview", back_url: import_mapping_path(@import)) %>
 <%= ui_page(max_width: :md) do %>
   <%= ui_page_header(title: "Preview") %>
   <%= ui_grid(cols: { default: 1, sm: 3 }) do %>

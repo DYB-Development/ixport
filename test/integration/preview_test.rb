@@ -53,4 +53,10 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_equal [ [ "A1", 100 ] ], Product.pluck(:sku, :price_cents)
   end
+
+  test "the person can go back from the preview to change the mapping" do
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_select "a[href='/data_imports/imports/#{@import.id}/mapping']"
+  end
 end
