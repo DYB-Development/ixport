@@ -48,4 +48,10 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
 
     assert_equal [ true, false, false ], [ registration.allows?("admin", "North"), registration.allows?("rep", "North"), registration.allows?("admin", "South") ]
   end
+
+  test "a registration with no rule is open to every signed-in person" do
+    Ixport.register_export(:products, title: "Products", exporter: "ProductExporter")
+
+    assert Ixport.export_registration(:products).allows?("rep", "North")
+  end
 end
