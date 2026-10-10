@@ -34,4 +34,10 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal [ 3, 3, 2, 1 ], @task.reload.then { |task| [ task.total, task.done, task.changed_count, task.refusals.size ] }
   end
+
+  test "the finished task links to the import's result page" do
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_equal "/data_imports/imports/#{@import.id}", @task.reload.result_url
+  end
 end
