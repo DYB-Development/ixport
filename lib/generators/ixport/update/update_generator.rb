@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+
+require "rails/generators"
+require "rails/generators/active_record"
+
+module Ixport
+  module Generators
+    class UpdateGenerator < Rails::Generators::Base
+      include ActiveRecord::Generators::Migration
+
+      source_root File.expand_path("../install/templates", __dir__)
+
+      desc "Updates Ixport: copies the migrations added since it was installed."
+
+      def copy_export_templates_migration
+        migration_template "create_ixport_export_templates.rb.erb", "db/migrate/create_ixport_export_templates.rb"
+      end
+    end
+  end
+end
