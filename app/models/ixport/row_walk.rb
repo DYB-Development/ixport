@@ -4,7 +4,7 @@ require "csv"
 
 module Ixport
   class RowWalk
-    Row = Struct.new(:number, :record, :outcome, keyword_init: true)
+    Row = Struct.new(:number, :record, :outcome, :reason, keyword_init: true)
 
     def initialize(import, importer)
       @import = import
@@ -12,19 +12,19 @@ module Ixport
     end
 
     def rows
-      @rows ||= data_rows.each_with_index.map do |cells, index|
-        values = values_of(cells)
-        existing = existing_records[values[match_field]]
-        if existing
-          existing.assign_attributes(values)
-          Row.new(number: index + 2, record: existing, outcome: :update)
-        else
-          Row.new(number: index + 2, record: @importer.records.new(values), outcome: :add)
-        end
-      end
+      @rows ||= data_rows.each_with_index.map { |cells, index| row_for(cells, index + 2) }
     end
 
     private
+
+    def row_for(cells, number)
+      values = values_of(cells)
+      existing = existing_records[values[match_field]]
+      record = existing ? existing.tap { |found| found.assign_attributes(values) } : @importer.records.new(values)
+      return Row.new(number: number, record: record, outcome: :refused, reason: record.errors.full_messages.to_sentence) unless record.valid?
+
+      Row.new(number: number, record: record, outcome: existing ? :update : :add)
+    end
 
     def data_rows
       @data_rows ||= CSV.parse(@import.file.download).drop(1)

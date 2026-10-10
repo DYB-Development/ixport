@@ -32,6 +32,12 @@ class Ixport::RowWalkTest < ActiveSupport::TestCase
     assert_equal [ [ :update, product ] ], walk.rows.map { |row| [ row.outcome, row.record ] }
   end
 
+  test "a row whose record is not valid will be refused with the reason the record gives" do
+    walk = walk_of("SKU,Price\nA1,lots\n", { "0" => "sku", "1" => "price_cents" })
+
+    assert_equal [ [ :refused, "Price cents is not a number" ] ], walk.rows.map { |row| [ row.outcome, row.reason ] }
+  end
+
   private
 
   def walk_of(csv, mapping)
