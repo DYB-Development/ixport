@@ -24,6 +24,14 @@ class Ixport::RowWalkTest < ActiveSupport::TestCase
     assert_equal [ :add ], walk.rows.map(&:outcome)
   end
 
+  test "a row whose match value matches one of the importer's records will update it" do
+    product = @account.products.create!(sku: "A1", price_cents: 100)
+
+    walk = walk_of("SKU,Price\nA1,250\n", { "0" => "sku", "1" => "price_cents" })
+
+    assert_equal [ [ :update, product ] ], walk.rows.map { |row| [ row.outcome, row.record ] }
+  end
+
   private
 
   def walk_of(csv, mapping)
