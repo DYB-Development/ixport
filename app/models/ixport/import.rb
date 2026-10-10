@@ -15,9 +15,9 @@ module Ixport
     validate :file_has_header_row, on: :create
     validate :file_within_inline_row_limit, on: :create, unless: -> { Ixport.configuration.background_runner }
 
-    def run!(importer, reporter: NullReporter.new)
+    def run!(reporter: NullReporter.new)
       with_lock do
-        walk_and_save(importer, reporter) unless finished?
+        walk_and_save(reporter) unless finished?
       end
     end
 
@@ -39,6 +39,14 @@ module Ixport
       Ixport.registration(key).title
     end
 
+    def rows
+      RowWalk.new(self, importer).rows
+    end
+
+    def importer
+      importer_class.new(person: person, account: account)
+    end
+
     def importer_class
       Ixport.registration(key).importer.constantize
     end
@@ -49,8 +57,8 @@ module Ixport
 
     private
 
-    def walk_and_save(importer, reporter)
-      rows = RowWalk.new(self, importer).rows
+    def walk_and_save(reporter)
+      rows = self.rows
       reporter.set_total(rows.size)
       rows.each do |row|
         if row.outcome == :refused
