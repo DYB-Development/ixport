@@ -40,4 +40,10 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal "/data_imports/imports/#{@import.id}", @task.reload.result_url
   end
+
+  test "the task and the import list the same refused rows with the same reasons" do
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_equal @import.refusals.map { |refusal| [ "Row #{refusal.row_number}", refusal.reason ] }, @task.reload.refusals.map { |refusal| [ refusal.label, refusal.reason ] }
+  end
 end
