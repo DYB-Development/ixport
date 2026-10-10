@@ -6,8 +6,8 @@ module Ixport
     before_action :find_import, only: :show
 
     def index
-      @registrations = Ixport.registrations.values
-      @imports = Import.where(person: ixport_person, account: ixport_account).order(created_at: :desc).with_attached_file.includes(:refusals)
+      @registrations = Ixport.registrations.values.select { |registration| allowed?(registration) }
+      @imports = Import.where(person: ixport_person, account: ixport_account, key: @registrations.map { |registration| registration.key.to_s }).order(created_at: :desc).with_attached_file.includes(:refusals)
     end
 
     def new
@@ -31,7 +31,7 @@ module Ixport
 
     def find_registration
       @registration = Ixport.registrations[params[:key].to_s.to_sym]
-      head :not_found unless @registration
+      head :not_found unless @registration && allowed?(@registration)
     end
   end
 end

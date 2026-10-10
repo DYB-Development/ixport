@@ -3,6 +3,17 @@
 require "test_helper"
 
 class Ixport::RegistrationsTest < ActiveSupport::TestCase
+  class ProductImportPolicy
+    def initialize(person, account)
+      @person = person
+      @account = account
+    end
+
+    def create?
+      @person == "admin"
+    end
+  end
+
   def teardown
     Ixport.reset_registrations!
   end
@@ -39,5 +50,25 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
     Ixport.register_export(:products, title: "Products", exporter: "ProductExporter", chosen: true)
 
     assert Ixport.export_registration(:products).chosen
+  end
+
+  test "a registration's rule receives the person and the account and allows or refuses them" do
+    Ixport.register_import(:products, title: "Products", importer: "ProductImporter", allow: ->(person, account) { person == "admin" && account == "North" })
+
+    registration = Ixport.registration(:products)
+
+    assert_equal [ true, false, false ], [ registration.allows?("admin", "North"), registration.allows?("rep", "North"), registration.allows?("admin", "South") ]
+  end
+
+  test "a registration with no rule is open to every signed-in person" do
+    Ixport.register_export(:products, title: "Products", exporter: "ProductExporter")
+
+    assert Ixport.export_registration(:products).allows?("rep", "North")
+  end
+
+  test "a rule can call the host's own Pundit policy to decide" do
+    Ixport.register_import(:products, title: "Products", importer: "ProductImporter", allow: ->(person, account) { ProductImportPolicy.new(person, account).create? })
+
+    assert_equal [ true, false ], [ Ixport.registration(:products).allows?("admin", "North"), Ixport.registration(:products).allows?("rep", "North") ]
   end
 end

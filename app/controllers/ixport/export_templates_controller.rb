@@ -37,12 +37,12 @@ module Ixport
 
     def find_template
       @template = ExportTemplate.find_by(id: params[:id], account: ixport_account)
-      head :not_found unless @template
+      head :not_found unless @template && allowed?(@template.registration)
     end
 
     def find_chosen_export
       @registration = Ixport.export_registrations[params[:export_id].to_s.to_sym]
-      head :not_found unless @registration&.chosen
+      head :not_found unless @registration&.chosen && allowed?(@registration)
     end
 
     def known_columns(registration)
