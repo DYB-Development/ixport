@@ -49,6 +49,27 @@ class PreviewAndRunAgreeTest < ActionDispatch::IntegrationTest
     assert_equal preview, { "add" => import.added_count.to_s, "update" => import.updated_count.to_s, "refused" => import.refusals.count.to_s }
   end
 
+  test "the same file gives the same refused rows inside the request, through wallflower and through a host's own runner" do
+    csv = "SKU,Price\nB2,lots\nC3,300\nD4,\n"
+
+    inline = import_of(csv)
+    post "/data_imports/imports/#{inline.id}/run"
+
+    Ixport.configure { |config| config.background_runner = :wallflower }
+    Ixport.install_background_runner!
+    through_wallflower = import_of(csv)
+    post "/data_imports/imports/#{through_wallflower.id}/run"
+    Wallflower::RunJob.perform_now(Wallflower::Task.last)
+
+    Ixport.configure { |config| config.background_runner = "PreviewAndRunAgreeTest::RecordingRunner" }
+    through_host_runner = import_of(csv)
+    post "/data_imports/imports/#{through_host_runner.id}/run"
+    Ixport.run_import(through_host_runner)
+
+    refusals = [ inline, through_wallflower, through_host_runner ].map { |import| import.refusals.pluck(:row_number, :reason) }
+    assert_equal [ refusals.first ] * 3, refusals
+  end
+
   private
 
   def import_of(csv)
