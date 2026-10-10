@@ -42,6 +42,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_includes migration, "t.string :status, null: false, default: \"pending\""
   end
 
+  test "the migration counts the rows an import added" do
+    assert_includes migration, "t.integer :added_count, null: false, default: 0"
+  end
+
   private
 
   def migration

@@ -6,6 +6,7 @@ class CreateIxportImports < ActiveRecord::Migration[<%= ActiveRecord::Migration.
       t.references :account, polymorphic: true, null: true
       t.json :mapping
       t.string :status, null: false, default: "pending"
+      t.integer :added_count, null: false, default: 0
       t.timestamps
     end
   end
