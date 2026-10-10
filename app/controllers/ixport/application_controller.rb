@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Ixport
-  class ApplicationController < ::ApplicationController
+  class ApplicationController < Ixport.configuration.base_controller.constantize
     before_action { send(Ixport.configuration.authentication_method) }
     layout -> { Ixport.configuration.layout }
 
