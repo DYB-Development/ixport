@@ -11,5 +11,9 @@ module Ixport
     def self.fields
       @fields ||= []
     end
+
+    def new_row?(_row)
+      true
+    end
   end
 end
