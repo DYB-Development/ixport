@@ -26,4 +26,12 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
 
     assert_equal [ "Products", "ProductExporter" ], [ Ixport.export_registration(:products).title, Ixport.export_registration(:products).exporter ]
   end
+
+  test "a registered export whose exporter class does not exist raises an error naming the class" do
+    Ixport.register_export(:products, title: "Products", exporter: "MissingProductExporter")
+
+    error = assert_raises(Ixport::MissingExporter) { Ixport.check_registrations! }
+
+    assert_includes error.message, "MissingProductExporter"
+  end
 end
