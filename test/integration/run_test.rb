@@ -130,6 +130,16 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ { "added" => "1", "updated" => "1" }, [ [ "4", "Price cents is not a number" ] ] ], result_on_page
   end
 
+  test "with a runner configured, a repeated run request hands the import over only once" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_equal [ @import ], RecordingRunner.enqueued
+  end
+
   private
 
   def use_wallflower

@@ -7,6 +7,7 @@ module Ixport
     def create
       runner = Ixport.background_runner
       return run_in_request unless runner
+      return redirect_to import_path(@import) unless @import.status == "pending"
 
       @import.update!(status: "running")
       runner.enqueue(@import)
