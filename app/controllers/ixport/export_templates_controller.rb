@@ -2,7 +2,8 @@
 
 module Ixport
   class ExportTemplatesController < ApplicationController
-    before_action :find_chosen_export
+    before_action :find_chosen_export, only: %i[new create]
+    before_action :find_template, only: :show
 
     def new
       @columns = @registration.exporter.constantize.columns
@@ -13,7 +14,17 @@ module Ixport
       redirect_to exports_path
     end
 
+    def show
+      exporter = @template.registration.exporter.constantize.new(person: ixport_person, account: ixport_account)
+      send_data CsvWriter.new(exporter, @template.picked_columns).to_csv, filename: "#{@template.name.parameterize}.csv", type: "text/csv"
+    end
+
     private
+
+    def find_template
+      @template = ExportTemplate.find_by(id: params[:id], account: ixport_account)
+      head :not_found unless @template
+    end
 
     def find_chosen_export
       @registration = Ixport.export_registrations[params[:export_id].to_s.to_sym]

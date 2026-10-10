@@ -53,4 +53,13 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
     choices = [ "None", "SKU", "Price", "Account" ]
     assert_equal [ choices, choices, choices ], css_select("form select[name='columns[]']").map { |select| select.css("option").map { |option| option.text.strip } }
   end
+
+  test "downloading a template gives a CSV with only the picked columns, in the picked order" do
+    @account.products.create!(sku: "A1", price_cents: 100)
+    template = Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "price_cents", "sku" ], person: @person, account: @account)
+
+    get "/data_imports/export_templates/#{template.id}"
+
+    assert_equal "Price,SKU\n100,A1\n", response.body
+  end
 end
