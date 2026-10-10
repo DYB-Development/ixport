@@ -1,0 +1,8 @@
+<%= ui_form_page(title: "Match columns", back_url: root_path) %>
+<%= ui_page(max_width: :md) do %>
+  <% @import.headers.each do |header| %>
+    <%= tag.div(data: { column: true }) do %>
+      <%= tag.span(header, data: { column_name: true }) %>
+    <% end %>
+  <% end %>
+<% end %>
