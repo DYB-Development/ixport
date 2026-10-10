@@ -3,7 +3,12 @@
 require "test_helper"
 
 class ImportListTest < ActionDispatch::IntegrationTest
+  def setup
+    ApplicationController.signed_in_user = User.create!(name: "Rep")
+  end
+
   def teardown
+    ApplicationController.signed_in_user = nil
     Ixport.reset_registrations!
   end
 
