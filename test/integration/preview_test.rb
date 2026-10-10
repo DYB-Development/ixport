@@ -13,6 +13,16 @@ class PreviewTest < ActionDispatch::IntegrationTest
     end
   end
 
+  class ProductBySkuAndPriceImporter < Ixport::Importer
+    field :sku, label: "SKU"
+    field :price_cents, label: "Price"
+    match_on :sku, :price_cents
+
+    def records
+      account.products
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -64,5 +74,14 @@ class PreviewTest < ActionDispatch::IntegrationTest
     get "/data_imports/imports/#{@import.id}/preview"
 
     assert_select "form[action='/data_imports/imports/#{@import.id}/run'] button[type=submit]", text: "Run import"
+  end
+
+  test "the preview counts a row matched on several fields as an update" do
+    Ixport.register_import(:prices, title: "Prices", importer: "PreviewTest::ProductBySkuAndPriceImporter")
+    import = Ixport::Import.create!(key: "prices", person: @person, account: @account, mapping: { "0" => "sku", "1" => "price_cents" }, file: { io: StringIO.new("SKU,Price\nA1,100\nA1,999\n"), filename: "prices.csv" })
+
+    get "/data_imports/imports/#{import.id}/preview"
+
+    assert_equal({ "add" => "1", "update" => "1", "refused" => "0" }, css_select("[data-count]").to_h { |count| [ count["data-count"], count.text.strip ] })
   end
 end
