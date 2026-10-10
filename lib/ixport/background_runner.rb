@@ -9,6 +9,10 @@ module Ixport
     end
   end
 
+  def self.run_import(import, reporter: NullReporter.new)
+    import.run!(import.importer_class.new(person: import.person, account: import.account), reporter: reporter)
+  end
+
   def self.install_background_runner!
     return unless configuration.background_runner == :wallflower
 

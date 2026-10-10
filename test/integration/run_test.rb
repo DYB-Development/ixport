@@ -120,6 +120,16 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_select "[data-import-running]", text: "This import is running."
   end
 
+  test "once a host's own runner finishes, the import's page shows its counts and refused rows" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    post "/data_imports/imports/#{@import.id}/run"
+
+    Ixport.run_import(@import)
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_equal [ { "added" => "1", "updated" => "1" }, [ [ "4", "Price cents is not a number" ] ] ], result_on_page
+  end
+
   private
 
   def use_wallflower
