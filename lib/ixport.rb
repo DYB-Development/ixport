@@ -1,5 +1,6 @@
 require "ixport/version"
 require "ixport/configuration"
+require "ixport/registrations"
 require "ixport/engine"
 
 module Ixport
