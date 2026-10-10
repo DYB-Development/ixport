@@ -70,4 +70,15 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "customers.csv" ], css_select("[data-past-import] [data-file-name]").map { |name| name.text.strip }
   end
+
+  test "a person the rule refuses does not see that export listed and gets not found for its download" do
+    Ixport.register_export(:products, title: "Products", exporter: "AccessRuleTest::ProductExporter", allow: ADMINS_ONLY)
+    Ixport.register_export(:customers, title: "Customers", exporter: "AccessRuleTest::ProductExporter")
+
+    get "/data_imports/exports"
+    listed = css_select("[data-export]").map { |entry| entry.text.strip }
+    get "/data_imports/exports/products"
+
+    assert_equal [ [ "Customers" ], 404 ], [ listed, response.status ]
+  end
 end
