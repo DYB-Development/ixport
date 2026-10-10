@@ -17,6 +17,7 @@ module Ixport
         migration_template "create_ixport_import_refusals.rb.erb", "db/migrate/create_ixport_import_refusals.rb"
         migration_template "create_ixport_export_templates.rb.erb", "db/migrate/create_ixport_export_templates.rb"
         migration_template "add_wallflower_task_to_ixport_imports.rb.erb", "db/migrate/add_wallflower_task_to_ixport_imports.rb"
+        migration_template "add_error_message_to_ixport_imports.rb.erb", "db/migrate/add_error_message_to_ixport_imports.rb"
       end
     end
   end
