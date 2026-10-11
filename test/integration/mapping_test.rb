@@ -75,4 +75,12 @@ class MappingTest < ActionDispatch::IntegrationTest
 
     assert_equal [ "SKU", "Price" ], css_select("[data-column] [data-column-name]").map { |name| name.text.strip }
   end
+
+  test "returning to the mapping page shows each column's saved choice, including skipped columns" do
+    @import.update!(mapping: { "1" => "sku" })
+
+    get "/data_imports/imports/#{@import.id}/mapping"
+
+    assert_equal [ "", "sku" ], [ 0, 1 ].map { |index| css_select("select[name='mapping[#{index}]'] option[selected]").first&.[]("value").to_s }
+  end
 end

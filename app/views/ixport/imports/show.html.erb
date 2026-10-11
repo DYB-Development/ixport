@@ -15,9 +15,11 @@
       <%= ui_alert(type: :error, message: tag.span(@import.error_message, data: { import_error: true })) %>
       <p>Rows saved before it stopped stay saved.</p>
     <% end %>
-    <%= ui_grid(cols: { default: 1, sm: 2 }) do %>
+    <%= ui_badge(label: tag.span(@import.status.humanize, data: { import_status: true }), variant: @import.failed? ? :danger : :success) %>
+    <%= ui_grid(cols: { default: 1, sm: 3 }) do %>
       <%= ui_stat_card(label: "Added", value: tag.span(@import.added_count, data: { result_count: "added" })) %>
       <%= ui_stat_card(label: "Updated", value: tag.span(@import.updated_count, data: { result_count: "updated" })) %>
+      <%= ui_stat_card(label: "Rows in file", value: tag.span(@import.row_count, data: { result_count: "total" })) %>
     <% end %>
     <% if @import.refusals.any? %>
       <%= ui_section(title: "Refused") do %>

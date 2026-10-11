@@ -158,6 +158,13 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ "Disk full", { "added" => "1", "updated" => "1" } ], [ css_select("[data-import-error]").first&.text&.strip, result_on_page.first ]
   end
 
+  test "the result page shows the import's status and how many rows the file had" do
+    post "/data_imports/imports/#{@import.id}/run"
+    follow_redirect!
+
+    assert_equal [ "Finished", "3" ], [ css_select("[data-import-status]").first&.text&.strip, css_select("[data-result-count='total']").first&.text&.strip ]
+  end
+
   private
 
   def use_wallflower
@@ -166,7 +173,7 @@ class RunTest < ActionDispatch::IntegrationTest
   end
 
   def result_on_page
-    counts = css_select("[data-result-count]").to_h { |count| [ count["data-result-count"], count.text.strip ] }
+    counts = css_select("[data-result-count=added], [data-result-count=updated]").to_h { |count| [ count["data-result-count"], count.text.strip ] }
     refused = css_select("[data-refused-row]").map { |row| [ row.at_css("[data-row-number]").text.strip, row.at_css("[data-reason]").text.strip ] }
     [ counts, refused ]
   end
