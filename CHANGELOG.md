@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-10
+
 ### Fixed
 - An importer that names no match fields adds every passing row as a new record instead of matching every row to one existing record.
 - Rows that match the same record each work on their own copy, so an invalid row no longer fails the valid rows before it.
