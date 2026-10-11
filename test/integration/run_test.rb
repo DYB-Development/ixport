@@ -173,7 +173,7 @@ class RunTest < ActionDispatch::IntegrationTest
   end
 
   def result_on_page
-    counts = css_select("[data-result-count]").to_h { |count| [ count["data-result-count"], count.text.strip ] }
+    counts = css_select("[data-result-count=added], [data-result-count=updated]").to_h { |count| [ count["data-result-count"], count.text.strip ] }
     refused = css_select("[data-refused-row]").map { |row| [ row.at_css("[data-row-number]").text.strip, row.at_css("[data-reason]").text.strip ] }
     [ counts, refused ]
   end
