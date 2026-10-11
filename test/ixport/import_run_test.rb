@@ -97,6 +97,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ [ "RENT", 1000 ], 3 ], [ rent.reload.values_at(:sku, :price_cents), @account.products.count ]
   end
 
+  test "two rows matching one record each work on their own copy, so an invalid row does not fail the valid one" do
+    product = @account.products.create!(sku: "A1", price_cents: 100)
+    import = import_of("SKU,Price\nA1,150\nA1,lots\n")
+
+    import.run!
+
+    assert_equal [ "finished", 150, [ [ 3, "Price cents is not a number" ] ] ], [ import.reload.status, product.reload.price_cents, import.refusals.pluck(:row_number, :reason) ]
+  end
+
   private
 
   def import_of(csv)
