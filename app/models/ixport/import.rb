@@ -54,6 +54,10 @@ module Ixport
       Ixport.registration(key).importer.constantize
     end
 
+    def row_count
+      [ CSV.parse(contents).size - 1, 0 ].max
+    end
+
     def headers
       CSV.parse_line(contents) || []
     end

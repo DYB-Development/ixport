@@ -158,6 +158,13 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ "Disk full", { "added" => "1", "updated" => "1" } ], [ css_select("[data-import-error]").first&.text&.strip, result_on_page.first ]
   end
 
+  test "the result page shows the import's status and how many rows the file had" do
+    post "/data_imports/imports/#{@import.id}/run"
+    follow_redirect!
+
+    assert_equal [ "Finished", "3" ], [ css_select("[data-import-status]").first&.text&.strip, css_select("[data-result-count='total']").first&.text&.strip ]
+  end
+
   private
 
   def use_wallflower
