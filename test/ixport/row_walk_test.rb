@@ -23,6 +23,15 @@ class Ixport::RowWalkTest < ActiveSupport::TestCase
     end
   end
 
+  class UnmatchedProductImporter < Ixport::Importer
+    field :sku, label: "SKU"
+    field :price_cents, label: "Price"
+
+    def records
+      account.products
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -78,6 +87,14 @@ class Ixport::RowWalkTest < ActiveSupport::TestCase
     walk = walk_of("SKU,Price\nA1,100.0\n", { "0" => "sku", "1" => "price_cents" }, ProductBySkuAndPriceImporter)
 
     assert_equal [ [ :update, product ] ], walk.rows.map { |row| [ row.outcome, row.record ] }
+  end
+
+  test "with no match fields named, every row adds a new record" do
+    @account.products.create!(sku: "A1", price_cents: 100)
+
+    walk = walk_of("SKU,Price\nA1,100\nB2,200\n", { "0" => "sku", "1" => "price_cents" }, UnmatchedProductImporter)
+
+    assert_equal [ [ :add, true ], [ :add, true ] ], walk.rows.map { |row| [ row.outcome, row.record.new_record? ] }
   end
 
   private

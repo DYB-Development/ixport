@@ -39,6 +39,8 @@ module Ixport
     end
 
     def match_key(values)
+      return if match_fields.empty?
+
       key = match_fields.map { |field| cast(field, values[field]) }
       key unless key.any?(&:blank?)
     end
