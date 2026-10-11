@@ -13,6 +13,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     end
   end
 
+  class UnmatchedProductImporter < Ixport::Importer
+    field :sku, label: "SKU"
+    field :price_cents, label: "Price"
+
+    def records
+      account.products
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -76,6 +85,16 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     import = import_of("SKU,Price\nRAISE,300\n")
 
     assert_error_reported(RuntimeError) { import.run! }
+  end
+
+  test "with no match fields named, a run leaves every existing record unchanged" do
+    Ixport.register_import(:unmatched, title: "Products", importer: "Ixport::ImportRunTest::UnmatchedProductImporter")
+    rent = @account.products.create!(sku: "RENT", price_cents: 1000)
+    import = Ixport::Import.create!(key: "unmatched", person: @person, account: @account, mapping: { "0" => "sku", "1" => "price_cents" }, file: { io: StringIO.new("SKU,Price\nA1,100\nB2,200\n"), filename: "products.csv" })
+
+    import.run!
+
+    assert_equal [ [ "RENT", 1000 ], 3 ], [ rent.reload.values_at(:sku, :price_cents), @account.products.count ]
   end
 
   private
