@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- The mapping page shows each column's saved choice when a person returns to it, and puts each column's name beside its choice from small screens up.
+- The result page shows the import's status and how many rows its file had.
+
 ## [0.3.1] - 2026-10-10
 
 ### Fixed

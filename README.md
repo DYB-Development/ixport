@@ -81,7 +81,7 @@ To match on several fields, name them all, for example `match_on :happened_on, :
 
 From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file is not UTF-8 text, when its quoting is broken (the message names the line where reading stopped), when it has no header row, or, in an app with no background runner, when it has more rows than `config.inline_row_limit`. A byte order mark at the start of the file is ignored, so the first column keeps its name.
 
-After uploading, the person matches each column of the file's header row to one of the importer's fields, by its label, or skips it. Saving the mapping moves them on to the preview.
+After uploading, the person matches each column of the file's header row to one of the importer's fields, by its label, or skips it. Saving the mapping moves them on to the preview, and going back to the mapping page shows the choices already made.
 
 The preview shows how many rows will add a record, update one or be refused, before anything is saved. It lists each row that will update a record and each refused row, by its row number in the file, with the reason the record gives for a refusal. A row is refused when the record it builds is not valid. Viewing the preview saves nothing, and the person can go back from it to change the mapping.
 
@@ -89,7 +89,7 @@ The preview shows how many rows will add a record, update one or be refused, bef
 
 The person runs the import from the preview. With no background runner configured, it runs inside the request. Each row that passes the record's validations is saved, updating the record it matches or adding a new one. Each row that fails them is refused and kept with its row number and reason, and the record it matched is left unchanged.
 
-The import's result page then shows how many rows were added and how many updated, and lists each refused row. It shows the same thing on every later visit. A finished import offers no Run button, its preview leads to its result page, and running it again adds or changes nothing.
+The import's result page then shows its status, how many rows the file had, how many were added and how many updated, and lists each refused row. It shows the same thing on every later visit. A finished import offers no Run button, its preview leads to its result page, and running it again adds or changes nothing.
 
 An import belongs to the person and account that uploaded it, and anyone else gets not found when they open it.
 
