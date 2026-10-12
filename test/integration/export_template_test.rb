@@ -27,6 +27,14 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
     Ixport.reset_registrations!
   end
 
+  test "the exports page loads when a saved template's key is no longer registered" do
+    Ixport::ExportTemplate.create!(key: "retired_products", name: "Old prices", columns: [ "sku" ], person: @person, account: @account)
+
+    get "/data_imports/exports"
+
+    assert_response :success
+  end
+
   test "a person saves a named template of picked columns in the order they picked them" do
     post "/data_imports/exports/products/templates", params: { name: "Prices", columns: [ "price_cents", "", "sku" ] }
 
