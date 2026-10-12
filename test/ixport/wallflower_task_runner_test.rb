@@ -62,4 +62,12 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal 1, reports.size
   end
+
+  test "the one entry for an import that fails while wallflower runs it carries the error the import raised" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    reports = capture_error_reports { Wallflower::RunJob.perform_now(@task) }
+
+    assert_equal [ [ RuntimeError, "Disk full" ] ], reports.map { |report| [ report.error.class, report.error.message ] }
+  end
 end
