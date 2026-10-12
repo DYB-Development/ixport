@@ -7,13 +7,18 @@ module Ixport
     def create
       runner = Ixport.background_runner
       return run_in_request unless runner
-      return redirect_to import_path(@import) unless @import.status == "pending"
+      return redirect_to import_path(@import) unless claim_pending_import
 
-      @import.update!(status: "running")
       hand_over(runner)
     end
 
     private
+
+    def claim_pending_import
+      claimed = Import.where(id: @import.id, status: "pending").update_all(status: "running", updated_at: Time.current) == 1
+      @import.reload if claimed
+      claimed
+    end
 
     def hand_over(runner)
       runner.enqueue(@import)
