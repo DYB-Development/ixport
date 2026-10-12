@@ -13,7 +13,8 @@ module Ixport
 
     def find_import
       @import = Import.find_by(id: params[:import_id] || params[:id], person: ixport_person, account: ixport_account)
-      head :not_found unless @import && allowed?(Ixport.registration(@import.key))
+      registration = @import && Ixport.registrations[@import.key.to_sym]
+      head :not_found unless registration && allowed?(registration)
     end
 
     def ixport_person
