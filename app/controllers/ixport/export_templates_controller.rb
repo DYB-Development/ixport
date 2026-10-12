@@ -10,8 +10,12 @@ module Ixport
     end
 
     def create
-      ExportTemplate.create!(key: @registration.key, name: params[:name], columns: known_columns(@registration), person: ixport_person, account: ixport_account)
-      redirect_to exports_path
+      template = ExportTemplate.new(key: @registration.key, name: params[:name], columns: known_columns(@registration), person: ixport_person, account: ixport_account)
+      return redirect_to exports_path if template.save
+
+      @columns = @registration.exporter.constantize.columns
+      @name_error = template.errors[:name].first
+      render :new, status: :unprocessable_entity
     end
 
     def show

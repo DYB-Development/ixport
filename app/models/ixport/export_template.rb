@@ -7,6 +7,8 @@ module Ixport
     belongs_to :person, polymorphic: true
     belongs_to :account, polymorphic: true, optional: true
 
+    validates :name, presence: { message: "Give the template a name." }
+
     def registration
       Ixport.export_registration(key)
     end
