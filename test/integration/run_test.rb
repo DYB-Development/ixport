@@ -228,6 +228,18 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ @import ], RecordingRunner.enqueued
   end
 
+  test "with a runner configured, any number of run requests that all loaded the import while it was pending hand it over once" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    loaded_while_pending = Array.new(5) { Ixport::Import.find(@import.id) }
+
+    loaded_while_pending.each do |import|
+      Ixport::Import.stub(:find_by, import) { post "/data_imports/imports/#{@import.id}/run" }
+    end
+
+    assert_equal [ @import ], RecordingRunner.enqueued
+  end
+
   private
 
   def use_wallflower
