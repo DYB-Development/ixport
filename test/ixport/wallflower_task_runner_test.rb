@@ -54,4 +54,36 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal [ "failed", "Disk full", "/data_imports/imports/#{@import.id}" ], [ @task.reload.status, @task.error_message, @task.result_url ]
   end
+
+  test "an import that fails while wallflower runs it gives one entry in the host's error reporting" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    reports = capture_error_reports { Wallflower::RunJob.perform_now(@task) }
+
+    assert_equal 1, reports.size
+  end
+
+  test "the one entry for an import that fails while wallflower runs it carries the error the import raised" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    reports = capture_error_reports { Wallflower::RunJob.perform_now(@task) }
+
+    assert_equal [ [ RuntimeError, "Disk full" ] ], reports.map { |report| [ report.error.class, report.error.message ] }
+  end
+
+  test "a task run for an import that had already failed fails with the import's message" do
+    @import.update!(status: "failed", error_message: "Disk full")
+
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_equal [ "failed", "Disk full" ], [ @task.reload.status, @task.error_message ]
+  end
+
+  test "an import that fails while wallflower runs it is marked failed" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_predicate @import.reload, :failed?
+  end
 end
