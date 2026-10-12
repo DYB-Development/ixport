@@ -16,9 +16,9 @@ module Ixport
 
     validate :incoming_file_is_usable, on: :create
 
-    def run!(reporter: NullReporter.new)
+    def run!(reporter: NullReporter.new, report_failure: true)
       with_lock do
-        walk_and_save(reporter) if status.in?(%w[pending running])
+        walk_and_save(reporter, report_failure) if status.in?(%w[pending running])
       end
     end
 
@@ -78,7 +78,7 @@ module Ixport
 
     private
 
-    def walk_and_save(reporter)
+    def walk_and_save(reporter, report_failure)
       counts = { add: 0, update: 0 }
       rows = self.rows
       reporter.set_total(rows.size)
@@ -89,7 +89,7 @@ module Ixport
       end
       update!(status: "finished", added_count: counts[:add], updated_count: counts[:update])
     rescue StandardError => error
-      Rails.error.report(error)
+      Rails.error.report(error) if report_failure
       update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
     end
 

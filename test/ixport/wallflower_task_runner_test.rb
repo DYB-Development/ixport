@@ -54,4 +54,12 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal [ "failed", "Disk full", "/data_imports/imports/#{@import.id}" ], [ @task.reload.status, @task.error_message, @task.result_url ]
   end
+
+  test "an import that fails while wallflower runs it gives one entry in the host's error reporting" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    reports = capture_error_reports { Wallflower::RunJob.perform_now(@task) }
+
+    assert_equal 1, reports.size
+  end
 end
