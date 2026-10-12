@@ -78,4 +78,12 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal [ "failed", "Disk full" ], [ @task.reload.status, @task.error_message ]
   end
+
+  test "an import that fails while wallflower runs it is marked failed" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_predicate @import.reload, :failed?
+  end
 end
