@@ -199,6 +199,14 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ @import ], RecordingRunner.enqueued
   end
 
+  test "an import still marked running an hour after its last change is shown as stalled" do
+    @import.update_columns(status: "running", updated_at: 61.minutes.ago)
+
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_select "[data-import-stalled]", text: "This import has stopped making progress."
+  end
+
   private
 
   def use_wallflower

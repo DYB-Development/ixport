@@ -1,4 +1,6 @@
-<% heading = if @import.running?
+<% heading = if @import.stalled?
+                "Import stalled"
+              elsif @import.running?
                 "Import running"
               elsif @import.failed?
                 "Import failed"
@@ -8,7 +10,10 @@
 <%= ui_show_page(title: heading, back_url: root_path) %>
 <%= ui_page(max_width: :md) do %>
   <%= ui_page_header(title: heading) %>
-  <% if @import.running? %>
+  <% if @import.stalled? %>
+    <%= ui_alert(type: :error, message: tag.span("This import has stopped making progress.", data: { import_stalled: true })) %>
+    <p>Rows saved before it stopped stay saved.</p>
+  <% elsif @import.running? %>
     <%= ui_alert(type: :info, message: tag.span("This import is running.", data: { import_running: true })) %>
   <% else %>
     <% if @import.failed? %>
