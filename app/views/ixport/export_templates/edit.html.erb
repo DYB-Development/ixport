@@ -1,7 +1,7 @@
 <%= ui_form_page(title: "Edit #{@template.name}", subtitle: @template.registration.title, back_url: exports_path) %>
 <%= ui_page(max_width: :md) do %>
   <%= ui_form(action: export_template_path(@template), method: :patch) do %>
-    <%= ui_form_field(attribute: "name", label: "Template name", required: true, value: @template.name) %>
+    <%= ui_form_field(attribute: "name", label: "Template name", required: true, value: @template.name, errors: @name_error.present? ? [tag.span(@name_error, data: { name_error: true })] : []) %>
     <% column_options = @columns.map { |column| [column.label, column.key] } %>
     <% @columns.each_index do |index| %>
       <%= ui_form_field(attribute: "columns[]", label: "Column #{index + 1}", type: :select, options: column_options, include_blank: "None", value: @template.columns[index]) %>
