@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-12
+
+### Fixed
+- An import whose background runner raises while it is handed over goes back to pending, and its preview says it did not start so it can be run again.
+- An import still marked running an hour after its last change shows as stalled on its page.
+- Run import requests that arrive together hand an import to the background runner once.
+- A past import, or an export template's download and edit pages, return not found once its key is no longer registered, instead of a server error.
+- An import that fails while wallflower runs it is reported to the host's error reporting once, carrying the error the import raised.
+- An export template cannot be saved or edited without a name, and the form says a name is needed.
+
 ## [0.3.2] - 2026-10-11
 
 ### Changed
