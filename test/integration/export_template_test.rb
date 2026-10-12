@@ -66,6 +66,12 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
     assert_equal [ 422, 0, "Give the template a name." ], [ response.status, Ixport::ExportTemplate.count, css_select("[data-name-error]").first&.text&.strip ]
   end
 
+  test "saving a new template with no name in the request shows the page again with a message and saves nothing" do
+    post "/data_imports/exports/products/templates", params: { columns: [ "sku" ] }
+
+    assert_equal [ 422, 0, "Give the template a name." ], [ response.status, Ixport::ExportTemplate.count, css_select("[data-name-error]").first&.text&.strip ]
+  end
+
   test "a person saves a named template of picked columns in the order they picked them" do
     post "/data_imports/exports/products/templates", params: { name: "Prices", columns: [ "price_cents", "", "sku" ] }
 
