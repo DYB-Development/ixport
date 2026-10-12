@@ -52,6 +52,14 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a template's edit page returns not found once its key is no longer registered" do
+    template = Ixport::ExportTemplate.create!(key: "retired_products", name: "Old prices", columns: [ "sku" ], person: @person, account: @account)
+
+    get "/data_imports/export_templates/#{template.id}/edit"
+
+    assert_response :not_found
+  end
+
   test "a person saves a named template of picked columns in the order they picked them" do
     post "/data_imports/exports/products/templates", params: { name: "Prices", columns: [ "price_cents", "", "sku" ] }
 
