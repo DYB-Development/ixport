@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class RunTest < ActionDispatch::IntegrationTest
   class ProductImporter < Ixport::Importer
@@ -214,6 +215,29 @@ class RunTest < ActionDispatch::IntegrationTest
     get "/data_imports/imports/#{@import.id}"
 
     assert_equal %w[A1 B2], @account.products.order(:sku).pluck(:sku)
+  end
+
+  test "with a runner configured, a run request that loaded the import before another request marked it running does not hand it over again" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    loaded_before_the_first_run = Ixport::Import.find(@import.id)
+
+    post "/data_imports/imports/#{@import.id}/run"
+    Ixport::Import.stub(:find_by, loaded_before_the_first_run) { post "/data_imports/imports/#{@import.id}/run" }
+
+    assert_equal [ @import ], RecordingRunner.enqueued
+  end
+
+  test "with a runner configured, any number of run requests that all loaded the import while it was pending hand it over once" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    loaded_while_pending = Array.new(5) { Ixport::Import.find(@import.id) }
+
+    loaded_while_pending.each do |import|
+      Ixport::Import.stub(:find_by, import) { post "/data_imports/imports/#{@import.id}/run" }
+    end
+
+    assert_equal [ @import ], RecordingRunner.enqueued
   end
 
   private
