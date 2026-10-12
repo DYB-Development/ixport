@@ -35,6 +35,15 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "the exports page leaves out a saved template whose key is no longer registered" do
+    Ixport::ExportTemplate.create!(key: "products", name: "Prices", columns: [ "sku" ], person: @person, account: @account)
+    Ixport::ExportTemplate.create!(key: "retired_products", name: "Old prices", columns: [ "sku" ], person: @person, account: @account)
+
+    get "/data_imports/exports"
+
+    assert_equal [ "Prices" ], css_select("[data-export-template]").map { |template| template.text.strip }
+  end
+
   test "a person saves a named template of picked columns in the order they picked them" do
     post "/data_imports/exports/products/templates", params: { name: "Prices", columns: [ "price_cents", "", "sku" ] }
 
