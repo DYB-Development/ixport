@@ -188,6 +188,17 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_select "[data-import-not-started]", text: "This import did not start. Run it again."
   end
 
+  test "after a failed handoff, the person can run the same import again" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RaisingRunner" }
+    post "/data_imports/imports/#{@import.id}/run"
+
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_equal [ @import ], RecordingRunner.enqueued
+  end
+
   private
 
   def use_wallflower
