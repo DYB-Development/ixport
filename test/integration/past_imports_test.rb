@@ -52,6 +52,15 @@ class PastImportsTest < ActionDispatch::IntegrationTest
     assert_equal [ "current.csv" ], css_select("[data-past-import] [data-file-name]").map { |name| name.text.strip }
   end
 
+  test "a past import's page returns not found once its key is no longer registered" do
+    import = import_named("old.csv", status: "finished")
+    import.update_columns(key: "retired_products")
+
+    get "/data_imports/imports/#{import.id}"
+
+    assert_response :not_found
+  end
+
   test "an entry that has not run shows no counts" do
     import_named("march.csv")
 
