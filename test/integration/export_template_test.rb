@@ -44,6 +44,14 @@ class ExportTemplateTest < ActionDispatch::IntegrationTest
     assert_equal [ "Prices" ], css_select("[data-export-template]").map { |template| template.text.strip }
   end
 
+  test "a template's download page returns not found once its key is no longer registered" do
+    template = Ixport::ExportTemplate.create!(key: "retired_products", name: "Old prices", columns: [ "sku" ], person: @person, account: @account)
+
+    get "/data_imports/export_templates/#{template.id}"
+
+    assert_response :not_found
+  end
+
   test "a person saves a named template of picked columns in the order they picked them" do
     post "/data_imports/exports/products/templates", params: { name: "Prices", columns: [ "price_cents", "", "sku" ] }
 
