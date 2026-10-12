@@ -240,6 +240,14 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ @import ], RecordingRunner.enqueued
   end
 
+  test "an import that fails inside the request gives one entry in the host's error reporting, carrying the error it raised" do
+    @import.update!(file: { io: StringIO.new("SKU,Price\nRAISE,1\n"), filename: "products.csv" })
+
+    reports = capture_error_reports { post "/data_imports/imports/#{@import.id}/run" }
+
+    assert_equal [ [ RuntimeError, "Disk full" ] ], reports.map { |report| [ report.error.class, report.error.message ] }
+  end
+
   private
 
   def use_wallflower
