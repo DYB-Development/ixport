@@ -43,6 +43,15 @@ class PastImportsTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "the imports page leaves out a past import whose key is no longer registered" do
+    import_named("current.csv")
+    import_named("old.csv").update_columns(key: "retired_products")
+
+    get "/data_imports"
+
+    assert_equal [ "current.csv" ], css_select("[data-past-import] [data-file-name]").map { |name| name.text.strip }
+  end
+
   test "an entry that has not run shows no counts" do
     import_named("march.csv")
 
