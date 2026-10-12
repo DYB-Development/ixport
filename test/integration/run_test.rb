@@ -21,6 +21,12 @@ class RunTest < ActionDispatch::IntegrationTest
     end
   end
 
+  class RaisingRunner
+    def self.enqueue(_import)
+      raise "Queue unreachable"
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -163,6 +169,14 @@ class RunTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     assert_equal [ "Finished", "3" ], [ css_select("[data-import-status]").first&.text&.strip, css_select("[data-result-count='total']").first&.text&.strip ]
+  end
+
+  test "when the runner raises as an import is handed to it, the import is no longer running" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RaisingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_not @import.reload.running?
   end
 
   private
