@@ -35,6 +35,14 @@ class PastImportsTest < ActionDispatch::IntegrationTest
     assert_equal({ "import-title" => "Products", "file-name" => "march.csv", "status" => "Finished", "made-on" => "Mar 4, 2026", "added" => "2", "updated" => "1", "refused" => "1" }, entry_fields)
   end
 
+  test "the imports page loads when a past import's key is no longer registered" do
+    import_named("old.csv").update_columns(key: "retired_products")
+
+    get "/data_imports"
+
+    assert_response :success
+  end
+
   test "an entry that has not run shows no counts" do
     import_named("march.csv")
 
