@@ -207,6 +207,15 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_select "[data-import-stalled]", text: "This import has stopped making progress."
   end
 
+  test "rows saved by a run that started stay saved once the import is shown as stalled" do
+    @account.products.create!(sku: "B2", price_cents: 200)
+    @import.update_columns(status: "running", updated_at: 61.minutes.ago)
+
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_equal %w[A1 B2], @account.products.order(:sku).pluck(:sku)
+  end
+
   private
 
   def use_wallflower
