@@ -21,7 +21,7 @@ module Ixport
     rescue StandardError => error
       Rails.error.report(error)
       @import.update!(status: "pending")
-      redirect_to import_preview_path(@import)
+      redirect_to import_preview_path(@import), flash: { ixport_not_started: true }
     end
 
     def run_in_request

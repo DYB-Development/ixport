@@ -179,6 +179,15 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_not @import.reload.running?
   end
 
+  test "after a failed handoff, the import's page says the import did not start" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RaisingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+    follow_redirect!
+
+    assert_select "[data-import-not-started]", text: "This import did not start. Run it again."
+  end
+
   private
 
   def use_wallflower

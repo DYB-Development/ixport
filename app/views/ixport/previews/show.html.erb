@@ -1,6 +1,9 @@
 <%= ui_show_page(title: "Preview", back_url: import_mapping_path(@import)) %>
 <%= ui_page(max_width: :md) do %>
   <%= ui_page_header(title: "Preview") %>
+  <% if flash[:ixport_not_started].present? %>
+    <%= ui_alert(type: :error, message: tag.span("This import did not start. Run it again.", data: { import_not_started: true })) %>
+  <% end %>
   <%= ui_grid(cols: { default: 1, sm: 3 }) do %>
     <%= ui_stat_card(label: "Will add", value: tag.span(@counts[:add], data: { count: "add" })) %>
     <%= ui_stat_card(label: "Will update", value: tag.span(@counts[:update], data: { count: "update" })) %>
