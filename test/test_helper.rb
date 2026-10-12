@@ -31,7 +31,7 @@ CreateActiveStorageTables.migrate(:up)
 end
 
 wallflower_templates = File.join(Gem.loaded_specs["wallflower"].full_gem_path, "lib/generators/wallflower/install/templates")
-[ "create_wallflower_tasks", "create_wallflower_refusals", "add_result_url_to_wallflower_tasks", "add_error_message_to_wallflower_tasks" ].each do |name|
+[ "create_wallflower_tasks", "create_wallflower_refusals", "add_result_url_to_wallflower_tasks", "add_error_message_to_wallflower_tasks", "add_started_at_to_wallflower_tasks" ].each do |name|
   eval(ERB.new(File.read("#{wallflower_templates}/#{name}.rb.erb")).result) # rubocop:disable Security/Eval
   name.camelize.constantize.migrate(:up)
 end

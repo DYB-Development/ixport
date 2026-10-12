@@ -12,6 +12,8 @@ module Ixport
     has_one_attached :file
     has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
 
+    STALLED_AFTER = 1.hour
+
     validate :incoming_file_is_usable, on: :create
 
     def run!(reporter: NullReporter.new)
@@ -26,6 +28,10 @@ module Ixport
 
     def running?
       status == "running"
+    end
+
+    def stalled?
+      running? && updated_at < STALLED_AFTER.ago
     end
 
     def failed?

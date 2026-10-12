@@ -21,6 +21,12 @@ class RunTest < ActionDispatch::IntegrationTest
     end
   end
 
+  class RaisingRunner
+    def self.enqueue(_import)
+      raise "Queue unreachable"
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -163,6 +169,51 @@ class RunTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     assert_equal [ "Finished", "3" ], [ css_select("[data-import-status]").first&.text&.strip, css_select("[data-result-count='total']").first&.text&.strip ]
+  end
+
+  test "when the runner raises as an import is handed to it, the import is no longer running" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RaisingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_not @import.reload.running?
+  end
+
+  test "after a failed handoff, the import's page says the import did not start" do
+    Ixport.configure { |config| config.background_runner = "RunTest::RaisingRunner" }
+
+    post "/data_imports/imports/#{@import.id}/run"
+    follow_redirect!
+
+    assert_select "[data-import-not-started]", text: "This import did not start. Run it again."
+  end
+
+  test "after a failed handoff, the person can run the same import again" do
+    RecordingRunner.enqueued = []
+    Ixport.configure { |config| config.background_runner = "RunTest::RaisingRunner" }
+    post "/data_imports/imports/#{@import.id}/run"
+
+    Ixport.configure { |config| config.background_runner = "RunTest::RecordingRunner" }
+    post "/data_imports/imports/#{@import.id}/run"
+
+    assert_equal [ @import ], RecordingRunner.enqueued
+  end
+
+  test "an import still marked running an hour after its last change is shown as stalled" do
+    @import.update_columns(status: "running", updated_at: 61.minutes.ago)
+
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_select "[data-import-stalled]", text: "This import has stopped making progress."
+  end
+
+  test "rows saved by a run that started stay saved once the import is shown as stalled" do
+    @account.products.create!(sku: "B2", price_cents: 200)
+    @import.update_columns(status: "running", updated_at: 61.minutes.ago)
+
+    get "/data_imports/imports/#{@import.id}"
+
+    assert_equal %w[A1 B2], @account.products.order(:sku).pluck(:sku)
   end
 
   private

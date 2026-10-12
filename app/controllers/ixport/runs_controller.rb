@@ -10,11 +10,19 @@ module Ixport
       return redirect_to import_path(@import) unless @import.status == "pending"
 
       @import.update!(status: "running")
-      runner.enqueue(@import)
-      redirect_to @import.wallflower_task_id ? wallflower.task_path(@import.wallflower_task_id) : import_path(@import)
+      hand_over(runner)
     end
 
     private
+
+    def hand_over(runner)
+      runner.enqueue(@import)
+      redirect_to @import.wallflower_task_id ? wallflower.task_path(@import.wallflower_task_id) : import_path(@import)
+    rescue StandardError => error
+      Rails.error.report(error)
+      @import.update!(status: "pending")
+      redirect_to import_preview_path(@import), flash: { ixport_not_started: true }
+    end
 
     def run_in_request
       @import.run!
