@@ -70,4 +70,12 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
 
     assert_equal [ [ RuntimeError, "Disk full" ] ], reports.map { |report| [ report.error.class, report.error.message ] }
   end
+
+  test "a task run for an import that had already failed fails with the import's message" do
+    @import.update!(status: "failed", error_message: "Disk full")
+
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_equal [ "failed", "Disk full" ], [ @task.reload.status, @task.error_message ]
+  end
 end
