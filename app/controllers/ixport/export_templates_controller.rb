@@ -28,8 +28,12 @@ module Ixport
     end
 
     def update
-      @template.update!(name: params[:name], columns: known_columns(@template.registration))
-      redirect_to exports_path
+      return redirect_to exports_path if @template.update(name: params[:name], columns: known_columns(@template.registration))
+
+      @columns = @template.registration.exporter.constantize.columns
+      @name_error = @template.errors[:name].first
+      @template.restore_attributes
+      render :edit, status: :unprocessable_entity
     end
 
     def destroy
