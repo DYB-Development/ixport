@@ -24,6 +24,12 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
     assert_equal [ "Products", "ProductImporter" ], [ Ixport.registration(:products).title, Ixport.registration(:products).importer ]
   end
 
+  test "a host registers an import that refuses the whole file when any row is refused" do
+    Ixport.register_import(:questions, title: "Questions", importer: "QuestionImporter", refuse_whole_file: true)
+
+    assert Ixport.registration(:questions).refuse_whole_file
+  end
+
   test "a registered import whose importer class does not exist raises an error naming the class" do
     Ixport.register_import(:products, title: "Products", importer: "MissingProductImporter")
 

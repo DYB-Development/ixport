@@ -10,14 +10,14 @@ module Ixport
     end
   end
 
-  Registration = Struct.new(:key, :title, :importer, :allow, keyword_init: true) { include AccessRule }
+  Registration = Struct.new(:key, :title, :importer, :allow, :refuse_whole_file, keyword_init: true) { include AccessRule }
   ExportRegistration = Struct.new(:key, :title, :exporter, :chosen, :allow, keyword_init: true) { include AccessRule }
 
   class MissingImporter < StandardError; end
   class MissingExporter < StandardError; end
 
-  def self.register_import(key, title:, importer:, allow: nil)
-    registrations[key.to_sym] = Registration.new(key: key.to_sym, title: title, importer: importer.to_s, allow: allow)
+  def self.register_import(key, title:, importer:, allow: nil, refuse_whole_file: false)
+    registrations[key.to_sym] = Registration.new(key: key.to_sym, title: title, importer: importer.to_s, allow: allow, refuse_whole_file: refuse_whole_file)
   end
 
   def self.registration(key)

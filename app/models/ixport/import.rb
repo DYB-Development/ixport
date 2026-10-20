@@ -55,6 +55,10 @@ module Ixport
       RowWalk.new(self, importer).rows
     end
 
+    def whole_file_refused?(rows = self.rows)
+      Ixport.registration(key).refuse_whole_file && rows.any? { |row| row.outcome == :refused }
+    end
+
     def importer
       importer_class.new(person: person, account: account, target: target)
     end
@@ -83,18 +87,36 @@ module Ixport
 
     def walk_and_save(reporter, report_failure)
       counts = { add: 0, update: 0 }
-      rows = self.rows
+      rows = rows_to_walk
       reporter.set_total(rows.size)
-      rows.each do |row|
-        save_row(row, reporter)
-        counts[row.outcome] += 1 if counts.key?(row.outcome)
-        reporter.advance
+      saving_together(counts) do
+        rows.each do |row|
+          save_row(row, reporter)
+          counts[row.outcome] += 1 if counts.key?(row.outcome)
+          reporter.advance
+        end
       end
       update!(status: "finished", added_count: counts[:add], updated_count: counts[:update])
     rescue StandardError => error
       @run_error = error
       Rails.error.report(error) if report_failure
       update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
+    end
+
+    def saving_together(counts, &block)
+      return yield unless Ixport.registration(key).refuse_whole_file
+
+      begin
+        self.class.transaction(requires_new: true, &block)
+      rescue StandardError
+        counts.transform_values! { 0 }
+        raise
+      end
+    end
+
+    def rows_to_walk
+      rows = self.rows
+      whole_file_refused?(rows) ? rows.select { |row| row.outcome == :refused } : rows
     end
 
     def save_row(row, reporter)

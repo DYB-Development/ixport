@@ -11,6 +11,7 @@ module Ixport
       @counts = { add: 0, update: 0, refused: 0 }.merge(rows.group_by(&:outcome).transform_values(&:size))
       @update_rows = rows.select { |row| row.outcome == :update }
       @refused_rows = rows.select { |row| row.outcome == :refused }
+      @whole_file_refused = @import.whole_file_refused?(rows)
     end
   end
 end

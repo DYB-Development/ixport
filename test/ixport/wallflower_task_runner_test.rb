@@ -35,6 +35,14 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
     assert_equal [ 3, 3, 2, 1 ], @task.reload.then { |task| [ task.total, task.done, task.changed_count, task.refusals.size ] }
   end
 
+  test "the task of an import that refuses the whole file reports no row changed when any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::WallflowerTaskRunnerTest::ProductImporter", refuse_whole_file: true)
+
+    Wallflower::RunJob.perform_now(@task)
+
+    assert_equal [ 0, 1 ], @task.reload.then { |task| [ task.changed_count, task.refusals.size ] }
+  end
+
   test "the finished task links to the import's result page" do
     Wallflower::RunJob.perform_now(@task)
 

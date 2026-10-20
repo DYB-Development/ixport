@@ -124,6 +124,50 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ "B2" ], chosen.products.pluck(:sku)
   end
 
+  test "an import that refuses the whole file saves no row when any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import_of("SKU,Price\nB2,200\nC3,lots\nD4,400\n").run!
+
+    assert_empty @account.products
+  end
+
+  test "an import that refuses the whole file records no rows added or updated when any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+    @account.products.create!(sku: "A1", price_cents: 100)
+
+    import = import_of("SKU,Price\nA1,150\nB2,200\nC3,lots\n")
+    import.run!
+
+    assert_equal [ "finished", 0, 0 ], import.reload.values_at(:status, :added_count, :updated_count)
+  end
+
+  test "an import that refuses the whole file saves every row when every row is valid" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import_of("SKU,Price\nB2,200\nC3,300\n").run!
+
+    assert_equal [ [ "B2", 200 ], [ "C3", 300 ] ], @account.products.order(:sku).pluck(:sku, :price_cents)
+  end
+
+  test "an import that refuses the whole file keeps no row saved before its run stopped on an error" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import = import_of("SKU,Price\nB2,200\nRAISE,300\n")
+    import.run!
+
+    assert_equal [ "failed", [] ], [ import.reload.status, @account.products.pluck(:sku) ]
+  end
+
+  test "an import that refuses the whole file records no rows added when its run stopped on an error" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import = import_of("SKU,Price\nB2,200\nRAISE,300\n")
+    import.run!
+
+    assert_equal 0, import.reload.added_count
+  end
+
   private
 
   def import_of(csv)

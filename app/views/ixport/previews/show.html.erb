@@ -32,7 +32,11 @@
       </ul>
     <% end %>
   <% end %>
-  <%= ui_form(action: import_run_path(@import)) do %>
-    <%= ui_button(label: "Run import") %>
+  <% if @whole_file_refused %>
+    <%= ui_alert(type: :error, message: tag.span("This import saves no row while any row is refused. Fix the refused rows in the file and upload it again.", data: { whole_file_refused: true })) %>
+  <% else %>
+    <%= ui_form(action: import_run_path(@import)) do %>
+      <%= ui_button(label: "Run import") %>
+    <% end %>
   <% end %>
 <% end %>
