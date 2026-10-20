@@ -92,7 +92,7 @@ module Ixport
       reporter.set_total(rows.size)
       rows.each do |row|
         save_row(row, reporter, saving)
-        counts[row.outcome] += 1 if counts.key?(row.outcome)
+        counts[row.outcome] += 1 if saving && counts.key?(row.outcome)
         reporter.advance
       end
       update!(status: "finished", added_count: counts[:add], updated_count: counts[:update])

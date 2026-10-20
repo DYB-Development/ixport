@@ -132,6 +132,16 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_empty @account.products
   end
 
+  test "an import that refuses the whole file records no rows added or updated when any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+    @account.products.create!(sku: "A1", price_cents: 100)
+
+    import = import_of("SKU,Price\nA1,150\nB2,200\nC3,lots\n")
+    import.run!
+
+    assert_equal [ "finished", 0, 0 ], import.reload.values_at(:status, :added_count, :updated_count)
+  end
+
   private
 
   def import_of(csv)
