@@ -92,4 +92,12 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_select "form[action='/data_imports/imports/#{@import.id}/run']", count: 0
   end
+
+  test "an import that refuses the whole file says to fix the file and upload it again while any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "PreviewTest::ProductImporter", refuse_whole_file: true)
+
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_select "[data-whole-file-refused]", text: "This import saves no row while any row is refused. Fix the refused rows in the file and upload it again."
+  end
 end
