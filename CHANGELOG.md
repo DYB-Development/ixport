@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-20
+
 ### Added
 - An import can add its rows to a record the app chooses, named by its Global ID in the link to the upload page, and its importer reads that record as `target`.
 - A registration's `allow:` rule that takes a third argument receives the import's chosen record and can refuse it, and a link, upload or import page naming a refused or missing record answers not found.
