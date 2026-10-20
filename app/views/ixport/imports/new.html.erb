@@ -3,6 +3,13 @@
   <% if @error.present? %>
     <%= ui_alert(type: :error, message: tag.span(@error, data: { upload_error: true })) %>
   <% end %>
+  <%= ui_section(title: "Fields this import expects") do %>
+    <ul>
+      <% @fields.each do |field| %>
+        <%= tag.li(field.label, data: { expected_field: true }) %>
+      <% end %>
+    </ul>
+  <% end %>
   <%= ui_form(action: imports_path, multipart: true) do %>
     <%= hidden_field_tag "key", @registration.key %>
     <%= hidden_field_tag "target", @target.to_global_id if @target %>

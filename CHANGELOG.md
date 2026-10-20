@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Run `bin/rails generate ixport:update` for the migration that lets an import keep its chosen record.
 - An import registered with `refuse_whole_file: true` saves no row from a file with any refused row, and its preview offers no Run import button and says to fix the file and upload it again.
 - An import registered with `refuse_whole_file: true` undoes every row it saved when its run stops on an error.
+- The upload page lists the fields its import expects, by the same labels the mapping page offers, before a file is chosen.
 
 ## [0.3.3] - 2026-10-12
 

@@ -26,6 +26,21 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/data_imports/imports'] input[type=file][name=file]"
   end
 
+  test "the upload page lists the importer's fields by label" do
+    get "/data_imports/imports/new", params: { key: "products" }
+
+    assert_equal [ "SKU", "Price" ], css_select("[data-expected-field]").map { |field| field.text.strip }
+  end
+
+  test "the upload page lists the same fields the mapping page offers" do
+    get "/data_imports/imports/new", params: { key: "products" }
+    listed = css_select("[data-expected-field]").map { |field| field.text.strip }
+    post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("products.csv", "text/csv") }
+    follow_redirect!
+
+    assert_equal listed, css_select("[data-column] select[name='mapping[0]'] option").map { |option| option.text.strip }.drop(1)
+  end
+
   test "the upload page opened with a chosen record carries that record into the upload" do
     chosen = Account.create!(name: "North")
 
