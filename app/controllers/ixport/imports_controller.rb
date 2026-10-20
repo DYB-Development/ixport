@@ -18,7 +18,7 @@ module Ixport
     end
 
     def create
-      import = Import.new(key: @registration.key, person: ixport_person, account: ixport_account, file: params[:file])
+      import = Import.new(key: @registration.key, person: ixport_person, account: ixport_account, target: @target, file: params[:file])
       if import.save
         redirect_to import_mapping_path(import)
       else
