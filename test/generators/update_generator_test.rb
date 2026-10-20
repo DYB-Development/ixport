@@ -37,6 +37,12 @@ class Ixport::Generators::UpdateGeneratorTest < ActiveSupport::TestCase
     assert_equal 1, migrations_named("add_error_message_to_ixport_imports").size
   end
 
+  test "adds the record an import's rows are added to, to an app that installed earlier" do
+    update
+
+    assert_equal 1, migrations_named("add_target_to_ixport_imports").size
+  end
+
   private
 
   def update
