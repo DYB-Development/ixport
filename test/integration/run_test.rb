@@ -103,6 +103,16 @@ class RunTest < ActionDispatch::IntegrationTest
     assert_equal [ "ixport_import", { "import_id" => @import.id }, "/background/tasks/#{task.id}" ], [ task.kind, task.params, URI(response.location).path ]
   end
 
+  test "with wallflower as the runner, an import that refuses the whole file saves no row when any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "RunTest::ProductImporter", refuse_whole_file: true)
+    use_wallflower
+
+    post "/data_imports/imports/#{@import.id}/run"
+    Wallflower::RunJob.perform_now(Wallflower::Task.last)
+
+    assert_equal [ "finished", [ [ "A1", 100 ] ] ], [ @import.reload.status, @account.products.pluck(:sku, :price_cents) ]
+  end
+
   test "with wallflower loaded but no runner configured, an import still runs inside the request" do
     post "/data_imports/imports/#{@import.id}/run"
 
