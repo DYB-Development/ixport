@@ -55,6 +55,10 @@ module Ixport
       RowWalk.new(self, importer).rows
     end
 
+    def whole_file_refused?(rows = self.rows)
+      Ixport.registration(key).refuse_whole_file && rows.any? { |row| row.outcome == :refused }
+    end
+
     def importer
       importer_class.new(person: person, account: account, target: target)
     end
@@ -84,9 +88,10 @@ module Ixport
     def walk_and_save(reporter, report_failure)
       counts = { add: 0, update: 0 }
       rows = self.rows
+      saving = !whole_file_refused?(rows)
       reporter.set_total(rows.size)
       rows.each do |row|
-        save_row(row, reporter)
+        save_row(row, reporter, saving)
         counts[row.outcome] += 1 if counts.key?(row.outcome)
         reporter.advance
       end
@@ -97,11 +102,11 @@ module Ixport
       update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
     end
 
-    def save_row(row, reporter)
+    def save_row(row, reporter, saving)
       if row.outcome == :refused
         refusals.create!(row_number: row.number, reason: row.reason)
         reporter.refuse(label: "Row #{row.number}", reason: row.reason)
-      else
+      elsif saving
         self.class.transaction(requires_new: true) { row.record.save! }
       end
     end

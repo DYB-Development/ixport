@@ -124,6 +124,14 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ "B2" ], chosen.products.pluck(:sku)
   end
 
+  test "an import that refuses the whole file saves no row when any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import_of("SKU,Price\nB2,200\nC3,lots\nD4,400\n").run!
+
+    assert_empty @account.products
+  end
+
   private
 
   def import_of(csv)
