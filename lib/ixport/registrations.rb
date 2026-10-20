@@ -2,8 +2,11 @@
 
 module Ixport
   module AccessRule
-    def allows?(person, account)
-      allow.nil? || allow.call(person, account)
+    def allows?(person, account, target = nil)
+      return true if allow.nil?
+      return allow.call(person, account) if allow.arity == 2
+
+      allow.call(person, account, target)
     end
   end
 

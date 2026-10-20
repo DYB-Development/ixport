@@ -23,6 +23,10 @@ module Ixport
       def copy_error_message_migration
         migration_template "add_error_message_to_ixport_imports.rb.erb", "db/migrate/add_error_message_to_ixport_imports.rb"
       end
+
+      def copy_target_migration
+        migration_template "add_target_to_ixport_imports.rb.erb", "db/migrate/add_target_to_ixport_imports.rb"
+      end
     end
   end
 end

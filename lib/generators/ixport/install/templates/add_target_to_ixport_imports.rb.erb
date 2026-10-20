@@ -1,0 +1,5 @@
+class AddTargetToIxportImports < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    add_reference :ixport_imports, :target, polymorphic: true, null: true
+  end
+end

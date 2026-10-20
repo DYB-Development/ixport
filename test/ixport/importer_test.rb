@@ -23,4 +23,10 @@ class Ixport::ImporterTest < ActiveSupport::TestCase
 
     assert_equal [ person, account ], ProductImporter.new(person: person, account: account).then { |importer| [ importer.person, importer.account ] }
   end
+
+  test "an importer knows the record its rows are added to" do
+    target = Account.create!(name: "North")
+
+    assert_equal target, ProductImporter.new(person: User.create!(name: "Rep"), account: nil, target: target).target
+  end
 end

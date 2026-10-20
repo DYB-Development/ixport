@@ -22,6 +22,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     end
   end
 
+  class TargetProductImporter < Ixport::Importer
+    field :sku, label: "SKU"
+    field :price_cents, label: "Price"
+
+    def records
+      target.products
+    end
+  end
+
   def setup
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
@@ -104,6 +113,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     import.run!
 
     assert_equal [ "finished", 150, [ [ 3, "Price cents is not a number" ] ] ], [ import.reload.status, product.reload.price_cents, import.refusals.pluck(:row_number, :reason) ]
+  end
+
+  test "an import with a chosen record adds its rows to that record" do
+    chosen = Account.create!(name: "South")
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::TargetProductImporter")
+
+    import_of("SKU,Price\nB2,200\n").tap { |import| import.update!(target: chosen) }.run!
+
+    assert_equal [ "B2" ], chosen.products.pluck(:sku)
   end
 
   private

@@ -18,7 +18,7 @@ module Ixport
     end
 
     def create
-      import = Import.new(key: @registration.key, person: ixport_person, account: ixport_account, file: params[:file])
+      import = Import.new(key: @registration.key, person: ixport_person, account: ixport_account, target: @target, file: params[:file])
       if import.save
         redirect_to import_mapping_path(import)
       else
@@ -31,7 +31,14 @@ module Ixport
 
     def find_registration
       @registration = Ixport.registrations[params[:key].to_s.to_sym]
-      head :not_found unless @registration && allowed?(@registration)
+      @target = chosen_target
+      head :not_found unless @registration && (@target || params[:target].blank?) && allowed?(@registration, @target)
+    end
+
+    def chosen_target
+      GlobalID::Locator.locate(params[:target]) if params[:target].present?
+    rescue ActiveRecord::RecordNotFound, NameError
+      nil
     end
   end
 end

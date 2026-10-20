@@ -26,10 +26,38 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/data_imports/imports'] input[type=file][name=file]"
   end
 
+  test "the upload page opened with a chosen record carries that record into the upload" do
+    chosen = Account.create!(name: "North")
+
+    get "/data_imports/imports/new", params: { key: "products", target: chosen.to_global_id.to_s }
+
+    assert_select "form input[type=hidden][name=target][value='#{chosen.to_global_id}']"
+  end
+
+  test "the upload page for a chosen record that does not exist answers not found" do
+    get "/data_imports/imports/new", params: { key: "products", target: "gid://dummy/Account/999" }
+
+    assert_response :not_found
+  end
+
+  test "the upload page for a chosen record of a kind that does not exist answers not found" do
+    get "/data_imports/imports/new", params: { key: "products", target: "gid://dummy/Nope/1" }
+
+    assert_response :not_found
+  end
+
   test "a person uploads a CSV for a registered mapped import" do
     post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("products.csv", "text/csv") }
 
     assert Ixport::Import.find_by(person: @person, key: "products").file.attached?
+  end
+
+  test "an upload with a chosen record keeps that record on the import" do
+    chosen = Account.create!(name: "North")
+
+    post "/data_imports/imports", params: { key: "products", target: chosen.to_global_id.to_s, file: fixture_file_upload("products.csv", "text/csv") }
+
+    assert_equal chosen, Ixport::Import.last.target
   end
 
   test "after uploading, the person is taken to map the file's columns" do

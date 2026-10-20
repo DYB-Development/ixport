@@ -66,6 +66,10 @@ class Ixport::Generators::InstallGeneratorTest < ActiveSupport::TestCase
     assert_equal 1, Dir.glob("#{destination}/db/migrate/*_add_error_message_to_ixport_imports.rb").size
   end
 
+  test "copies a migration that lets an import name the record its rows are added to" do
+    assert_includes File.read(Dir.glob("#{destination}/db/migrate/*_add_target_to_ixport_imports.rb").first.to_s), "add_reference :ixport_imports, :target, polymorphic: true, null: true"
+  end
+
   private
 
   def refusals_migration

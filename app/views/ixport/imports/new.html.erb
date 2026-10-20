@@ -5,6 +5,7 @@
   <% end %>
   <%= ui_form(action: imports_path, multipart: true) do %>
     <%= hidden_field_tag "key", @registration.key %>
+    <%= hidden_field_tag "target", @target.to_global_id if @target %>
     <%= ui_file_upload(name: "file", label: "CSV file", accept: ".csv") %>
     <%= ui_button(label: "Upload") %>
   <% end %>

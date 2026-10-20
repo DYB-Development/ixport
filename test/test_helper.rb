@@ -24,7 +24,7 @@ end
 ActiveRecord::Migration.verbose = false
 require Gem.loaded_specs["activestorage"].full_gem_path + "/db/migrate/20170806125915_create_active_storage_tables"
 CreateActiveStorageTables.migrate(:up)
-[ "create_ixport_imports", "create_ixport_import_refusals", "create_ixport_export_templates", "add_wallflower_task_to_ixport_imports", "add_error_message_to_ixport_imports" ].each do |name|
+[ "create_ixport_imports", "create_ixport_import_refusals", "create_ixport_export_templates", "add_wallflower_task_to_ixport_imports", "add_error_message_to_ixport_imports", "add_target_to_ixport_imports" ].each do |name|
   template = File.expand_path("../lib/generators/ixport/install/templates/#{name}.rb.erb", __dir__)
   eval(ERB.new(File.read(template)).result) # rubocop:disable Security/Eval
   name.camelize.constantize.migrate(:up)
