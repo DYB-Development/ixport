@@ -100,6 +100,16 @@ end
 
 A link naming a record that does not exist answers not found. Anyone can edit the link, so the registration's `allow:` rule decides which records a person may import into, as described under [Who may import or export](#who-may-import-or-export). An import opened with no record has a `target` of `nil` and works as before. Run `bin/rails generate ixport:update` after updating, for the migration that lets an import keep its record.
 
+## Refusing a whole file
+
+An import can be registered to save nothing from a file in which any row is refused, so a partial import never leaves half of a quiz's questions added:
+
+```ruby
+Ixport.register_import(:quiz_questions, title: "Quiz questions", importer: "QuizQuestionImporter", refuse_whole_file: true)
+```
+
+While any row is refused, its preview offers no Run import button and says to fix the refused rows in the file and upload it again. A run of such a file, inside the request or in the background, saves no row, records each refused row and counts no row added or updated. When every row is valid, every row is saved. If the run stops on an error, every row it saved is undone and it counts no row added or updated. Imports registered without `refuse_whole_file` work as before.
+
 ## Uploading and mapping a file
 
 From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file is not UTF-8 text, when its quoting is broken (the message names the line where reading stopped), when it has no header row, or, in an app with no background runner, when it has more rows than `config.inline_row_limit`. A byte order mark at the start of the file is ignored, so the first column keeps its name.
