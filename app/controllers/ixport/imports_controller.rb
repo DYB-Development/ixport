@@ -32,7 +32,7 @@ module Ixport
     def find_registration
       @registration = Ixport.registrations[params[:key].to_s.to_sym]
       @target = GlobalID::Locator.locate(params[:target]) if params[:target].present?
-      head :not_found unless @registration && allowed?(@registration)
+      head :not_found unless @registration && allowed?(@registration, @target)
     end
   end
 end
