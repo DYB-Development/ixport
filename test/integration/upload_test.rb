@@ -40,6 +40,12 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "the upload page for a chosen record of a kind that does not exist answers not found" do
+    get "/data_imports/imports/new", params: { key: "products", target: "gid://dummy/Nope/1" }
+
+    assert_response :not_found
+  end
+
   test "a person uploads a CSV for a registered mapped import" do
     post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("products.csv", "text/csv") }
 

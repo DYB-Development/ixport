@@ -37,7 +37,7 @@ module Ixport
 
     def chosen_target
       GlobalID::Locator.locate(params[:target]) if params[:target].present?
-    rescue ActiveRecord::RecordNotFound
+    rescue ActiveRecord::RecordNotFound, NameError
       nil
     end
   end
