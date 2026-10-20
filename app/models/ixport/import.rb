@@ -90,16 +90,24 @@ module Ixport
       rows = self.rows
       saving = !whole_file_refused?(rows)
       reporter.set_total(rows.size)
-      rows.each do |row|
-        save_row(row, reporter, saving)
-        counts[row.outcome] += 1 if saving && counts.key?(row.outcome)
-        reporter.advance
+      saving_together do
+        rows.each do |row|
+          save_row(row, reporter, saving)
+          counts[row.outcome] += 1 if saving && counts.key?(row.outcome)
+          reporter.advance
+        end
       end
       update!(status: "finished", added_count: counts[:add], updated_count: counts[:update])
     rescue StandardError => error
       @run_error = error
       Rails.error.report(error) if report_failure
       update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
+    end
+
+    def saving_together(&block)
+      return yield unless Ixport.registration(key).refuse_whole_file
+
+      self.class.transaction(requires_new: true, &block)
     end
 
     def save_row(row, reporter, saving)

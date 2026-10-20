@@ -150,6 +150,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ [ "B2", 200 ], [ "C3", 300 ] ], @account.products.order(:sku).pluck(:sku, :price_cents)
   end
 
+  test "an import that refuses the whole file keeps no row saved before its run stopped on an error" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import = import_of("SKU,Price\nB2,200\nRAISE,300\n")
+    import.run!
+
+    assert_equal [ "failed", [] ], [ import.reload.status, @account.products.pluck(:sku) ]
+  end
+
   private
 
   def import_of(csv)
