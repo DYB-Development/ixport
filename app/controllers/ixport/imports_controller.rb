@@ -4,6 +4,7 @@ module Ixport
   class ImportsController < ApplicationController
     before_action :find_registration, only: %i[new create]
     before_action :find_import, only: :show
+    before_action :find_fields, only: %i[new create]
 
     def index
       @registrations = Ixport.registrations.values.select { |registration| allowed?(registration) }
@@ -33,6 +34,10 @@ module Ixport
       @registration = Ixport.registrations[params[:key].to_s.to_sym]
       @target = chosen_target
       head :not_found unless @registration && (@target || params[:target].blank?) && allowed?(@registration, @target)
+    end
+
+    def find_fields
+      @fields = @registration.importer.constantize.fields
     end
 
     def chosen_target
