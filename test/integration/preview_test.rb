@@ -100,4 +100,13 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_select "[data-whole-file-refused]", text: "This import saves no row while any row is refused. Fix the refused rows in the file and upload it again."
   end
+
+  test "an import that refuses the whole file offers the Run import button when every row is valid" do
+    Ixport.register_import(:products, title: "Products", importer: "PreviewTest::ProductImporter", refuse_whole_file: true)
+    import = Ixport::Import.create!(key: "products", person: @person, account: @account, mapping: { "0" => "sku", "1" => "price_cents" }, file: { io: StringIO.new("SKU,Price\nB2,200\n"), filename: "products.csv" })
+
+    get "/data_imports/imports/#{import.id}/preview"
+
+    assert_select "form[action='/data_imports/imports/#{import.id}/run'] button[type=submit]", text: "Run import"
+  end
 end
