@@ -87,13 +87,12 @@ module Ixport
 
     def walk_and_save(reporter, report_failure)
       counts = { add: 0, update: 0 }
-      rows = self.rows
-      saving = !whole_file_refused?(rows)
+      rows = rows_to_walk
       reporter.set_total(rows.size)
       saving_together(counts) do
         rows.each do |row|
-          save_row(row, reporter, saving)
-          counts[row.outcome] += 1 if saving && counts.key?(row.outcome)
+          save_row(row, reporter)
+          counts[row.outcome] += 1 if counts.key?(row.outcome)
           reporter.advance
         end
       end
@@ -115,11 +114,16 @@ module Ixport
       end
     end
 
-    def save_row(row, reporter, saving)
+    def rows_to_walk
+      rows = self.rows
+      whole_file_refused?(rows) ? rows.select { |row| row.outcome == :refused } : rows
+    end
+
+    def save_row(row, reporter)
       if row.outcome == :refused
         refusals.create!(row_number: row.number, reason: row.reason)
         reporter.refuse(label: "Row #{row.number}", reason: row.reason)
-      elsif saving
+      else
         self.class.transaction(requires_new: true) { row.record.save! }
       end
     end
