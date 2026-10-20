@@ -71,4 +71,12 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
 
     assert_equal [ true, false ], [ Ixport.registration(:products).allows?("admin", "North"), Ixport.registration(:products).allows?("rep", "North") ]
   end
+
+  test "a rule that takes a third argument receives the chosen record and allows or refuses it" do
+    Ixport.register_import(:questions, title: "Questions", importer: "QuestionImporter", allow: ->(_person, account, target) { target == "#{account} quiz" })
+
+    registration = Ixport.registration(:questions)
+
+    assert_equal [ true, false ], [ registration.allows?("rep", "North", "North quiz"), registration.allows?("rep", "North", "South quiz") ]
+  end
 end
