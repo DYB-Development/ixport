@@ -26,6 +26,12 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/data_imports/imports'] input[type=file][name=file]"
   end
 
+  test "the upload page lists the importer's fields by label" do
+    get "/data_imports/imports/new", params: { key: "products" }
+
+    assert_equal [ "SKU", "Price" ], css_select("[data-expected-field]").map { |field| field.text.strip }
+  end
+
   test "the upload page opened with a chosen record carries that record into the upload" do
     chosen = Account.create!(name: "North")
 
