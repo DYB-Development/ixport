@@ -90,7 +90,7 @@ module Ixport
       rows = self.rows
       saving = !whole_file_refused?(rows)
       reporter.set_total(rows.size)
-      saving_together do
+      saving_together(counts) do
         rows.each do |row|
           save_row(row, reporter, saving)
           counts[row.outcome] += 1 if saving && counts.key?(row.outcome)
@@ -104,10 +104,15 @@ module Ixport
       update!(status: "failed", error_message: error.message, added_count: counts[:add], updated_count: counts[:update])
     end
 
-    def saving_together(&block)
+    def saving_together(counts, &block)
       return yield unless Ixport.registration(key).refuse_whole_file
 
-      self.class.transaction(requires_new: true, &block)
+      begin
+        self.class.transaction(requires_new: true, &block)
+      rescue StandardError
+        counts.transform_values! { 0 }
+        raise
+      end
     end
 
     def save_row(row, reporter, saving)

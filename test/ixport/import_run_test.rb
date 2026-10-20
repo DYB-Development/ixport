@@ -159,6 +159,15 @@ class Ixport::ImportRunTest < ActiveSupport::TestCase
     assert_equal [ "failed", [] ], [ import.reload.status, @account.products.pluck(:sku) ]
   end
 
+  test "an import that refuses the whole file records no rows added when its run stopped on an error" do
+    Ixport.register_import(:products, title: "Products", importer: "Ixport::ImportRunTest::ProductImporter", refuse_whole_file: true)
+
+    import = import_of("SKU,Price\nB2,200\nRAISE,300\n")
+    import.run!
+
+    assert_equal 0, import.reload.added_count
+  end
+
   private
 
   def import_of(csv)
