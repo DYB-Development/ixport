@@ -8,6 +8,7 @@ module Ixport
 
     belongs_to :person, polymorphic: true
     belongs_to :account, polymorphic: true, optional: true
+    belongs_to :target, polymorphic: true, optional: true
 
     has_one_attached :file
     has_many :refusals, -> { order(:row_number) }, class_name: "Ixport::ImportRefusal", dependent: :destroy
@@ -55,7 +56,7 @@ module Ixport
     end
 
     def importer
-      importer_class.new(person: person, account: account)
+      importer_class.new(person: person, account: account, target: target)
     end
 
     def importer_class
