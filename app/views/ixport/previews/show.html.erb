@@ -32,7 +32,9 @@
       </ul>
     <% end %>
   <% end %>
-  <%= ui_form(action: import_run_path(@import)) do %>
-    <%= ui_button(label: "Run import") %>
+  <% unless @whole_file_refused %>
+    <%= ui_form(action: import_run_path(@import)) do %>
+      <%= ui_button(label: "Run import") %>
+    <% end %>
   <% end %>
 <% end %>

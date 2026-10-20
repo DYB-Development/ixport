@@ -84,4 +84,12 @@ class PreviewTest < ActionDispatch::IntegrationTest
 
     assert_equal({ "add" => "1", "update" => "1", "refused" => "0" }, css_select("[data-count]").to_h { |count| [ count["data-count"], count.text.strip ] })
   end
+
+  test "an import that refuses the whole file offers no Run import button while any row is refused" do
+    Ixport.register_import(:products, title: "Products", importer: "PreviewTest::ProductImporter", refuse_whole_file: true)
+
+    get "/data_imports/imports/#{@import.id}/preview"
+
+    assert_select "form[action='/data_imports/imports/#{@import.id}/run']", count: 0
+  end
 end
