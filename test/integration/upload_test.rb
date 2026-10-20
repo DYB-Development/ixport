@@ -26,6 +26,14 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/data_imports/imports'] input[type=file][name=file]"
   end
 
+  test "the upload page opened with a chosen record carries that record into the upload" do
+    chosen = Account.create!(name: "North")
+
+    get "/data_imports/imports/new", params: { key: "products", target: chosen.to_global_id.to_s }
+
+    assert_select "form input[type=hidden][name=target][value='#{chosen.to_global_id}']"
+  end
+
   test "a person uploads a CSV for a registered mapped import" do
     post "/data_imports/imports", params: { key: "products", file: fixture_file_upload("products.csv", "text/csv") }
 
