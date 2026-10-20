@@ -60,6 +60,15 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
     assert_equal [ 404, 404, 404 ], responses
   end
 
+  test "an import's pages answer not found when the rule refuses its chosen record" do
+    Ixport.register_import(:products, title: "Products", importer: "AccessRuleTest::ProductImporter", allow: ->(_person, _account, target) { target&.name != "South" })
+    import = Ixport::Import.create!(key: "products", person: @person, account: @account, target: Account.create!(name: "South"), mapping: { "0" => "sku" }, file: { io: StringIO.new("SKU\nA1\n"), filename: "products.csv" })
+
+    get "/data_imports/imports/#{import.id}/mapping"
+
+    assert_response :not_found
+  end
+
   test "a person the rule refuses does not see their past imports of that kind" do
     Ixport.register_import(:customers, title: "Customers", importer: "AccessRuleTest::ProductImporter")
     [ "products", "customers" ].each do |key|

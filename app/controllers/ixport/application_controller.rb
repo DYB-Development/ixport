@@ -7,14 +7,14 @@ module Ixport
 
     private
 
-    def allowed?(registration)
-      registration.allows?(ixport_person, ixport_account)
+    def allowed?(registration, target = nil)
+      registration.allows?(ixport_person, ixport_account, target)
     end
 
     def find_import
       @import = Import.find_by(id: params[:import_id] || params[:id], person: ixport_person, account: ixport_account)
       registration = @import && Ixport.registrations[@import.key.to_sym]
-      head :not_found unless registration && allowed?(registration)
+      head :not_found unless registration && allowed?(registration, @import.target)
     end
 
     def ixport_person
