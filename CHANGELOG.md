@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- An import can add its rows to a record the app chooses, named by its Global ID in the link to the upload page, and its importer reads that record as `target`.
+- A registration's `allow:` rule that takes a third argument receives the import's chosen record and can refuse it, and a link, upload or import page naming a refused or missing record answers not found.
+- Run `bin/rails generate ixport:update` for the migration that lets an import keep its chosen record.
+
 ## [0.3.3] - 2026-10-12
 
 ### Fixed

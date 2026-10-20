@@ -77,6 +77,29 @@ Each field's key is the record's attribute name. ixport looks up every match val
 
 To match on several fields, name them all, for example `match_on :happened_on, :amount, :name`.
 
+## Importing into a chosen record
+
+An import can add its rows to one record the app chooses, such as questions uploaded into one quiz. The app names that record in the link to the upload page, as its Global ID:
+
+```erb
+<%= link_to "Import questions", ixport.new_import_path(key: :quiz_questions, target: @quiz.to_global_id) %>
+```
+
+The import keeps that record through upload, mapping, preview and run, and its importer reaches it as `target`:
+
+```ruby
+class QuizQuestionImporter < Ixport::Importer
+  field :prompt, label: "Question"
+  match_on :prompt
+
+  def records
+    target.questions
+  end
+end
+```
+
+A link naming a record that does not exist answers not found. Anyone can edit the link, so the registration's `allow:` rule decides which records a person may import into, as described under [Who may import or export](#who-may-import-or-export). An import opened with no record has a `target` of `nil` and works as before. Run `bin/rails generate ixport:update` after updating, for the migration that lets an import keep its record.
+
 ## Uploading and mapping a file
 
 From the engine's root page, a person picks a registered import and uploads a CSV for it. The upload is refused, with a message on the upload page, when the file is not UTF-8 text, when its quoting is broken (the message names the line where reading stopped), when it has no header row, or, in an app with no background runner, when it has more rows than `config.inline_row_limit`. A byte order mark at the start of the file is ignored, so the first column keeps its name.
@@ -163,6 +186,15 @@ Any import or export registration can take an `allow:` rule. It receives the sig
 Ixport.register_import :products, title: "Products", importer: "ProductImporter",
   allow: ->(person, account) { ProductImportPolicy.new(person, account).create? }
 ```
+
+A rule that takes a third argument also receives the import's chosen record, or `nil` when there is none, and returns false to refuse it:
+
+```ruby
+Ixport.register_import :quiz_questions, title: "Quiz questions", importer: "QuizQuestionImporter",
+  allow: ->(person, account, quiz) { quiz.nil? || quiz.account == account }
+```
+
+A link or upload naming a record the rule refuses answers not found, and so does every page of an import whose record it refuses. A rule that takes two arguments is called as before.
 
 A person the rule refuses does not see that import or export listed, nor their past imports of it, and every one of its pages and downloads answers not found. A registration with no rule is open to every signed-in person.
 
