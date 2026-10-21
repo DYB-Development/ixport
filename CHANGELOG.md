@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- An import's upload, mapping, preview and result pages render inside a host layout that calls the host app's own route helpers, such as a navigation bar linking to the host's pages.
+
 ## [0.4.0] - 2026-10-20
 
 ### Added
