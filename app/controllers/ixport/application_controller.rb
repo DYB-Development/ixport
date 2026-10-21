@@ -4,6 +4,9 @@ module Ixport
   class ApplicationController < Ixport.configuration.base_controller.constantize
     before_action { send(Ixport.configuration.authentication_method) }
     layout -> { Ixport.configuration.layout }
+    helper AppRoutesHelper
+
+    before_action { AppRoutesHelper.define_app_route_helpers }
 
     private
 

@@ -26,6 +26,12 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/data_imports/imports'] input[type=file][name=file]"
   end
 
+  test "the upload page renders inside a host layout that links to a host page" do
+    get "/data_imports/imports/new", params: { key: "products" }
+
+    assert_select "nav a[href='/quizzes']"
+  end
+
   test "the upload page lists the importer's fields by label" do
     get "/data_imports/imports/new", params: { key: "products" }
 
