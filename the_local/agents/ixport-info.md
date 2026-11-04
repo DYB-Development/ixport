@@ -52,8 +52,8 @@ ixport declares nothing for this local to document. Its surface is split between
 
 ## Conventions
 
-- **Mapped import** — one kind of import the host registers, made of a key, a title shown to people, and the name of its importer class.
-- **Fixed export** — one kind of export the host registers, made of a key, a title shown to people, and the name of its exporter class, whose download always holds every declared column. An export is fixed unless the host registers it as chosen.
+- **Mapped import** — one type of import the host registers, made of a key, a title shown to people, and the name of its importer class.
+- **Fixed export** — one type of export the host registers, made of a key, a title shown to people, and the name of its exporter class, whose download always holds every declared column. An export is fixed unless the host registers it as chosen.
 - **Chosen export** — an export registered the same way and marked as chosen, which has no download of its own and is downloaded only through the account's templates.
 - **Export template** — a named, ordered pick of a chosen export's columns, saved by one person and shared by everyone in their account.
 - **Picked columns** — the columns a template holds, in the order they were chosen. A slot left on None is dropped, a column picked twice is kept once, and a column the exporter no longer declares is left out of the download.
@@ -70,7 +70,7 @@ ixport declares nothing for this local to document. Its surface is split between
 - **Mapping** — which of the importer's columns each header in the file fills, stored by the header's position in the row. A header left on "Skip" is not stored.
 - **Row limit** — the most data rows an uploaded file may have, not counting the header row. It defaults to 1,000 and the host can change it. It applies only when the host has no background runner, and it does not apply to exports.
 - **Background runner** — what runs an import outside the request: none, wallflower, or a class the host app writes. Having wallflower in the app does not choose it, the host has to.
-- **Wallflower** — a separate gem that runs long tasks in the background and gives each task a page showing its progress. ixport registers its imports with it as a kind of task titled Import.
+- **Wallflower** — a separate gem that runs long tasks in the background and gives each task a page showing its progress. ixport registers its imports with it as a type of task titled Import.
 - **Row number** — a row's line in the file, counting the header as row 1, so the first data row is row 2.
 - **Add** — a row that no existing record equals on every match column, or that is blank in any match column, or comes from a file with no column mapped to one, so it creates a record.
 - **Update** — a row that equals an existing record on every match column, so it changes that record.

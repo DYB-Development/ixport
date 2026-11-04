@@ -44,7 +44,7 @@ class RunTest < ActionDispatch::IntegrationTest
     ApplicationController.signed_in_account = nil
     Ixport.reset_registrations!
     Ixport.reset_configuration!
-    Wallflower.reset_kinds!
+    Wallflower.reset_task_types!
   end
 
   test "running the import from the preview saves its rows inside the request" do
@@ -100,7 +100,7 @@ class RunTest < ActionDispatch::IntegrationTest
     post "/data_imports/imports/#{@import.id}/run"
 
     task = Wallflower::Task.last
-    assert_equal [ "ixport_import", { "import_id" => @import.id }, "/background/tasks/#{task.id}" ], [ task.kind, task.params, URI(response.location).path ]
+    assert_equal [ "ixport_import", { "import_id" => @import.id }, "/background/tasks/#{task.id}" ], [ task.task_type, task.params, URI(response.location).path ]
   end
 
   test "with wallflower as the runner, an import that refuses the whole file saves no row when any row is refused" do
