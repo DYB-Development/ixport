@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.5.0] - 2026-11-05
 
 ### Changed
 - The background runner uses wallflower's task types, so an app running imports through wallflower needs wallflower 0.5.0 or later.
