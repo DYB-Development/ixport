@@ -17,16 +17,16 @@ class Ixport::WallflowerTaskRunnerTest < ActiveSupport::TestCase
     @person = User.create!(name: "Rep")
     @account = Account.create!(name: "North")
     Ixport.register_import(:products, title: "Products", importer: "Ixport::WallflowerTaskRunnerTest::ProductImporter")
-    Wallflower.register_kind(:ixport_import, title: "Import", runner: "Ixport::WallflowerTaskRunner")
+    Wallflower.register_task_type(:ixport_import, title: "Import", runner: "Ixport::WallflowerTaskRunner")
     @account.products.create!(sku: "A1", price_cents: 100)
     csv = "SKU,Price\nA1,150\nB2,200\nC3,lots\n"
     @import = Ixport::Import.create!(key: "products", person: @person, account: @account, status: "running", mapping: { "0" => "sku", "1" => "price_cents" }, file: { io: StringIO.new(csv), filename: "products.csv" })
-    @task = Wallflower::Task.create!(kind: "ixport_import", person: @person, account: @account, params: { "import_id" => @import.id })
+    @task = Wallflower::Task.create!(task_type: "ixport_import", person: @person, account: @account, params: { "import_id" => @import.id })
   end
 
   def teardown
     Ixport.reset_registrations!
-    Wallflower.reset_kinds!
+    Wallflower.reset_task_types!
   end
 
   test "the task reports the import's progress and, when it finishes, the rows changed and refused" do

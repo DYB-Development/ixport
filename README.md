@@ -1,6 +1,6 @@
 # ixport
 
-CSV import and export for Rails apps. An app registers the kinds of CSV a person can import and the fields each one maps to, and the CSV downloads a person can export.
+CSV import and export for Rails apps. An app registers the types of CSV a person can import and the fields each one maps to, and the CSV downloads a person can export.
 
 ## Installation
 
@@ -49,7 +49,7 @@ end
 
 ## Mapped imports and importers
 
-A mapped import is a kind of CSV a person can import into one of the app's records. Register each one in an initializer with its key, its title and the name of its importer class:
+A mapped import is a type of CSV a person can import into one of the app's records. Register each one in an initializer with its key, its title and the name of its importer class:
 
 ```ruby
 Ixport.register_import :products, title: "Products", importer: "ProductImporter"
@@ -180,7 +180,7 @@ The engine's exports page, at `exports` under the mount path, lists every regist
 
 ## Chosen exports and templates
 
-An export registered with `chosen: true` lets a person pick its columns instead of taking all of them. It uses the same kind of exporter:
+An export registered with `chosen: true` lets a person pick its columns instead of taking all of them. It uses the same type of exporter:
 
 ```ruby
 Ixport.register_export :products, title: "Products", exporter: "ProductExporter", chosen: true

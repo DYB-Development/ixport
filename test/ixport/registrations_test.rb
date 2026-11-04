@@ -52,7 +52,7 @@ class Ixport::RegistrationsTest < ActiveSupport::TestCase
     assert_includes error.message, "MissingProductExporter"
   end
 
-  test "a host registers an export as chosen instead of fixed, with the same kind of exporter" do
+  test "a host registers an export as chosen instead of fixed, with the same type of exporter" do
     Ixport.register_export(:products, title: "Products", exporter: "ProductExporter", chosen: true)
 
     assert Ixport.export_registration(:products).chosen

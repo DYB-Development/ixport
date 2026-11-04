@@ -49,7 +49,7 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "a person the rule refuses gets not found for that kind's existing import pages" do
+  test "a person the rule refuses gets not found for that type's existing import pages" do
     import = Ixport::Import.create!(key: "products", person: @person, account: @account, mapping: { "0" => "sku" }, file: { io: StringIO.new("SKU\nA1\n"), filename: "products.csv" })
 
     responses = [ "mapping", "preview", "" ].map do |step|
@@ -77,7 +77,7 @@ class AccessRuleTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "a person the rule refuses does not see their past imports of that kind" do
+  test "a person the rule refuses does not see their past imports of that type" do
     Ixport.register_import(:customers, title: "Customers", importer: "AccessRuleTest::ProductImporter")
     [ "products", "customers" ].each do |key|
       Ixport::Import.create!(key: key, person: @person, account: @account, file: { io: StringIO.new("SKU\nA1\n"), filename: "#{key}.csv" })

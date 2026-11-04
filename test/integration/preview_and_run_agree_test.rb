@@ -35,7 +35,7 @@ class PreviewAndRunAgreeTest < ActionDispatch::IntegrationTest
     ApplicationController.signed_in_account = nil
     Ixport.reset_registrations!
     Ixport.reset_configuration!
-    Wallflower.reset_kinds!
+    Wallflower.reset_task_types!
   end
 
   test "the result's added, updated and refused counts equal the preview's" do

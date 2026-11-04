@@ -61,7 +61,7 @@ class UploadTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "the upload page for a chosen record of a kind that does not exist answers not found" do
+  test "the upload page for a chosen record of a type that does not exist answers not found" do
     get "/data_imports/imports/new", params: { key: "products", target: "gid://dummy/Nope/1" }
 
     assert_response :not_found
